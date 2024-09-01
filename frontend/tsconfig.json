@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "es2016",                                  
+    "module": "commonjs",                                
+    "jsx": "react-jsx",                                  /* เปิดใช้งาน JSX เพื่อรองรับ React */
+    "esModuleInterop": true,                             
+    "forceConsistentCasingInFileNames": true,            
+    "strict": true,                                      
+    "skipLibCheck": true,
+    "baseUrl": "./",                                    /* เพิ่ม baseUrl เพื่อรองรับการนำเข้าแบบ relative */
+    "paths": {
+      "*": ["src/*"]                                    /* เพิ่ม paths เพื่อแก้ปัญหาการหาโมดูลไม่เจอ */
+    }
+  }
+}
