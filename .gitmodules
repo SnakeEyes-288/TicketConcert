@@ -1,0 +1,3 @@
+[submodule "backend/entity"]
+	path = backend/entity
+	url = https://github.com/SnakeEyes-288/sa-67-example.git
