@@ -3,6 +3,7 @@ module example.com/sa-67-example
 go 1.22.5
 
 require (
+	github.com/SnakeEyes-288/sa-67-example v0.0.0-20240901114614-f3b8c8825ad6 // indirect
 	github.com/bytedance/sonic v1.12.2 // indirect
 	github.com/bytedance/sonic/loader v0.2.0 // indirect
 	github.com/cloudwego/base64x v0.1.4 // indirect

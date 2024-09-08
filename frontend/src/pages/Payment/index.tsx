@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { List, Select, Radio, Button, Avatar, Typography, Modal, Input, Upload, message } from 'antd';
+import { List, Select, Radio, Button, Avatar, Typography, Modal, Input, Upload, message, InputNumber } from 'antd';
 import { UserOutlined, UploadOutlined } from '@ant-design/icons';
 import QRCode from 'qrcode.react';
 
@@ -14,6 +14,7 @@ const Payment: React.FC = () => {
   const [selectedSeat, setSelectedSeat] = useState<string | null>(null);
   const [selectedTicketType, setSelectedTicketType] = useState<ConcertType | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethodType | null>(null);
+  const [ticketQuantity, setTicketQuantity] = useState<number>(1); // เพิ่ม state สำหรับจำนวนบัตร
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
 
   const concerts: string[] = [
@@ -41,6 +42,7 @@ const Payment: React.FC = () => {
       seat: selectedSeat,
       ticketType: selectedTicketType,
       paymentMethod: paymentMethod,
+      quantity: ticketQuantity, // เพิ่มจำนวนบัตรที่เลือก
     });
     setIsModalVisible(false);
   };
@@ -52,7 +54,7 @@ const Payment: React.FC = () => {
   const calculateAmount = () => {
     let basePrice = 1000;
     let ticketTypePrice = selectedTicketType === 'VIP' ? 500 : 200;
-    return basePrice + ticketTypePrice;
+    return (basePrice + ticketTypePrice) * ticketQuantity; // คำนวณราคาตามจำนวนบัตร
   };
 
   const getPromptPayQRCodeValue = () => {
@@ -73,12 +75,12 @@ const Payment: React.FC = () => {
       justifyContent: 'center', 
       alignItems: 'center', 
       height: '100vh',
-      width: '100vw',  // เพิ่ม width ให้เป็น 100vw เพื่อครอบคลุมทั้งความกว้างของหน้าจอ
+      width: '100vw',
       backgroundImage: 'url(/images/pngtree-3d-blue-lighting-stage-concert-arena-shiny-spotlight-vector-background-image_320463.jpg)',
       backgroundSize: 'cover',
       backgroundPosition: 'center',
-      margin: 0,  // ลบ margin ที่อาจเกิดขึ้น
-      padding: 0,  // ลบ padding ที่อาจเกิดขึ้น
+      margin: 0,
+      padding: 0,
     }}>
       <div style={{ width: '50%', backgroundColor: 'rgba(255, 255, 255, 0.8)', padding: '20px', borderRadius: '8px' }}>
         <List
@@ -126,6 +128,17 @@ const Payment: React.FC = () => {
           </Select>
         </div>
 
+        {/* เพิ่มช่องเลือกจำนวนบัตร */}
+        <div style={{ marginTop: '20px', textAlign: 'center' }}>
+          <Title level={5}>จำนวนบัตร</Title>
+          <InputNumber 
+            min={1} 
+            max={10} 
+            defaultValue={1} 
+            onChange={value => setTicketQuantity(value || 1)} 
+          />
+        </div>
+
         <div style={{ marginTop: '20px', textAlign: 'center' }}>
           <Title level={5}>วิธีการชำระเงิน</Title>
           <Radio.Group onChange={e => setPaymentMethod(e.target.value as PaymentMethodType)}>
@@ -164,6 +177,7 @@ const Payment: React.FC = () => {
         <p>คอนเสิร์ต: {selectedConcert}</p>
         <p>ที่นั่ง: {selectedSeat}</p>
         <p>ประเภทบัตร: {selectedTicketType}</p>
+        <p>จำนวนบัตร: {ticketQuantity} ใบ</p> {/* แสดงจำนวนบัตรที่เลือก */}
         <p>จำนวนเงินที่ต้องชำระ: {calculateAmount()} บาท</p>
 
         {paymentMethod === 'promptpay' && (

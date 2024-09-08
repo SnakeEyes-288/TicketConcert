@@ -1,7 +1,6 @@
 package main
 
 import (
-	//"github.com/example.com/sa-67-example/entity"
 	"example.com/sa-67-example/entity"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
