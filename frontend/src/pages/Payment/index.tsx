@@ -1,211 +1,77 @@
 import React, { useState } from 'react';
-import { List, Select, Radio, Button, Avatar, Typography, Modal, Input, Upload, message, InputNumber } from 'antd';
-import { UserOutlined, UploadOutlined } from '@ant-design/icons';
+import { Button, Modal, Typography, Input } from 'antd';
+import { useNavigate, useLocation } from 'react-router-dom';
 import QRCode from 'qrcode.react';
 
 const { Title } = Typography;
-const { Option } = Select;
-
-type ConcertType = 'VIP' | 'Regular';
-type PaymentMethodType = 'promptpay' | 'creditcard' | 'credit';
 
 const Payment: React.FC = () => {
-  const [selectedConcert, setSelectedConcert] = useState<string | null>(null);
-  const [selectedSeat, setSelectedSeat] = useState<string | null>(null);
-  const [selectedTicketType, setSelectedTicketType] = useState<ConcertType | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethodType | null>(null);
-  const [ticketQuantity, setTicketQuantity] = useState<number>(1); // เพิ่ม state สำหรับจำนวนบัตร
-  const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
+  const location = useLocation();
+  const { selectedConcert, selectedSeats, selectedTicketType, ticketQuantity, ticketPrice } = location.state || {};
+  
+  const [contactName, setContactName] = useState('');
+  const [contactEmail, setContactEmail] = useState('');
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const navigate = useNavigate();
 
-  const concerts: string[] = [
-    'คอนเสิร์ต A',
-    'คอนเสิร์ต B',
-    'คอนเสิร์ต C',
-    'คอนเสิร์ต D',
-  ];
-
-  const handleSelectConcert = (concert: string) => {
-    setSelectedConcert(concert);
+  const calculateAmount = () => {
+    return (ticketPrice || 0) * (ticketQuantity || 1);
   };
 
   const handlePayment = () => {
-    if (selectedConcert && selectedSeat && selectedTicketType && paymentMethod) {
-      setIsModalVisible(true);
-    } else {
-      alert('โปรดตรวจสอบให้แน่ใจว่าคุณได้เลือกตัวเลือกทั้งหมดแล้ว');
+    if (!contactName || !contactEmail) {
+      alert('กรุณากรอกข้อมูลให้ครบถ้วน');
+      return;
     }
+    setIsModalVisible(true);
   };
 
   const handleOk = () => {
-    console.log('การชำระเงินได้รับการยืนยัน:', {
-      concert: selectedConcert,
-      seat: selectedSeat,
-      ticketType: selectedTicketType,
-      paymentMethod: paymentMethod,
-      quantity: ticketQuantity, // เพิ่มจำนวนบัตรที่เลือก
-    });
     setIsModalVisible(false);
+    alert('การชำระเงินสำเร็จ');
+    navigate('/');
   };
 
-  const handleCancel = () => {
-    setIsModalVisible(false);
+  const getQRCodeValue = () => {
+    return `promptpay://qr-code-value-for-${calculateAmount()}`;
   };
-
-  const calculateAmount = () => {
-    let basePrice = 1000;
-    let ticketTypePrice = selectedTicketType === 'VIP' ? 500 : 200;
-    return (basePrice + ticketTypePrice) * ticketQuantity; // คำนวณราคาตามจำนวนบัตร
-  };
-
-  const getPromptPayQRCodeValue = () => {
-    return '00020101021259370016A0000006770101110000000505802TH6304F40F';
-  };
-
-  const handleUploadChange = (info: any) => {
-    if (info.file.status === 'done') {
-      message.success(`${info.file.name} ไฟล์อัพโหลดเรียบร้อย`);
-    } else if (info.file.status === 'error') {
-      message.error(`${info.file.name} การอัพโหลดล้มเหลว`);
-    }
-  };
+  
 
   return (
-    <div style={{ 
-      display: 'flex', 
-      justifyContent: 'center', 
-      alignItems: 'center', 
-      height: '100vh',
-      width: '100vw',
-      backgroundImage: 'url(/images/pngtree-3d-blue-lighting-stage-concert-arena-shiny-spotlight-vector-background-image_320463.jpg)',
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-      margin: 0,
-      padding: 0,
-    }}>
-      <div style={{ width: '50%', backgroundColor: 'rgba(255, 255, 255, 0.8)', padding: '20px', borderRadius: '8px' }}>
-        <List
-          header={<div style={{ textAlign: 'center' }}>รายการคอนเสิร์ต</div>}
-          bordered
-          dataSource={concerts}
-          renderItem={item => (
-            <List.Item
-              onClick={() => handleSelectConcert(item)}
-              style={{
-                backgroundColor: selectedConcert === item ? '#e6f7ff' : '#fff',
-                cursor: 'pointer',
-                textAlign: 'center',
-              }}
-            >
-              {item}
-            </List.Item>
-          )}
+    <div style={{ margin: '20px' }}>
+      <Title level={4}>การชำระเงินสำหรับคอนเสิร์ต: {selectedConcert}</Title>
+
+      <p><strong>ที่นั่งที่เลือก:</strong> {selectedSeats.join(', ')}</p>
+      <p><strong>ประเภทบัตร:</strong> {selectedTicketType}</p>
+      <p><strong>จำนวนบัตร:</strong> {ticketQuantity}</p>
+      <p><strong>ราคาต่อบัตร:</strong> {ticketPrice} บาท</p>
+      <p><strong>ยอดรวม:</strong> {calculateAmount()} บาท</p>
+
+      <div style={{ marginTop: '20px' }}>
+        <Input
+          placeholder="ชื่อผู้ติดต่อ"
+          value={contactName}
+          onChange={(e) => setContactName(e.target.value)}
+          style={{ marginBottom: '10px' }}
         />
-        <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center' }}>
-          <Select 
-            defaultValue="กรุณาระบุโซนที่นั่ง" 
-            style={{ width: '45%', marginRight: '10px' }} 
-            onChange={value => setSelectedSeat(value)}
-          >
-            <Option value="B1">B1</Option>
-            <Option value="B2">B2</Option>
-            <Option value="B3">B3</Option>
-            <Option value="B4">B4</Option>
-            <Option value="B5">B5</Option>
-            <Option value="B6">B6</Option>
-            <Option value="B7">B7</Option>
-            <Option value="B8">B8</Option>
-            <Option value="B9">B9</Option>
-            <Option value="B10">B10</Option>
-          </Select>
-
-          <Select 
-            defaultValue="กรุณาเลือกประเภทของบัตร" 
-            style={{ width: '45%' }} 
-            onChange={value => setSelectedTicketType(value as ConcertType)}
-          >
-            <Option value="VIP">VIP</Option>
-            <Option value="Regular">Regular</Option>
-          </Select>
-        </div>
-
-        {/* เพิ่มช่องเลือกจำนวนบัตร */}
-        <div style={{ marginTop: '20px', textAlign: 'center' }}>
-          <Title level={5}>จำนวนบัตร</Title>
-          <InputNumber 
-            min={1} 
-            max={10} 
-            defaultValue={1} 
-            onChange={value => setTicketQuantity(value || 1)} 
-          />
-        </div>
-
-        <div style={{ marginTop: '20px', textAlign: 'center' }}>
-          <Title level={5}>วิธีการชำระเงิน</Title>
-          <Radio.Group onChange={e => setPaymentMethod(e.target.value as PaymentMethodType)}>
-            <Radio value="promptpay">PromptPay QR Code</Radio>
-            <Radio value="creditcard">บัตรเครดิต/WeCard</Radio>
-            <Radio value="credit">โอนเงิน (รอการอัพโหลดสลิป)</Radio>
-          </Radio.Group>
-        </div>
-
-        <Button type="primary" style={{ marginTop: '20px', width: '100%' }} onClick={handlePayment}>
-          ยืนยันการชำระเงิน
-        </Button>
+        <Input
+          placeholder="อีเมลผู้ติดต่อ"
+          value={contactEmail}
+          onChange={(e) => setContactEmail(e.target.value)}
+        />
       </div>
 
-      <div style={{ position: 'absolute', top: '20px', right: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <Avatar size={48} icon={<UserOutlined style={{ color: 'white' }} />} />
-        <span style={{ marginTop: '10px', fontSize: '16px', fontWeight: 'bold', textAlign: 'center', color: 'white' }}>
-          Wichitchai Pengpara
-        </span>
-        <Button 
-          style={{ marginTop: '20px', width: '100%' }}
-          onClick={() => alert('ออกจากระบบ')}
-        >
-          ออกจากระบบ
-        </Button>
-      </div>
+      <Button type="primary" style={{ marginTop: '20px' }} onClick={handlePayment}>
+        ชำระเงิน
+      </Button>
 
       <Modal
-        title="ยืนยันการชำระเงิน"
+        title="QR Code สำหรับชำระเงิน"
         visible={isModalVisible}
         onOk={handleOk}
-        onCancel={handleCancel}
-        okText="ยืนยัน"
-        cancelText="ยกเลิก"
+        onCancel={() => setIsModalVisible(false)}
       >
-        <p>คอนเสิร์ต: {selectedConcert}</p>
-        <p>ที่นั่ง: {selectedSeat}</p>
-        <p>ประเภทบัตร: {selectedTicketType}</p>
-        <p>จำนวนบัตร: {ticketQuantity} ใบ</p> {/* แสดงจำนวนบัตรที่เลือก */}
-        <p>จำนวนเงินที่ต้องชำระ: {calculateAmount()} บาท</p>
-
-        {paymentMethod === 'promptpay' && (
-          <div>
-            <p>กรุณาสแกน QR Code ด้านล่างสำหรับการชำระเงิน PromptPay:</p>
-            <QRCode value={getPromptPayQRCodeValue()} size={256} /> {/* ขนาด QR Code */}
-          </div>
-        )}
-
-        {paymentMethod === 'creditcard' && (
-          <div>
-            <p>กรุณากรอกหมายเลขบัตรเครดิต/WeCard ของคุณ:</p>
-            <Input placeholder="หมายเลขบัตรเครดิต" />
-          </div>
-        )}
-
-        {paymentMethod === 'credit' && (
-          <div>
-            <p>กรุณาอัพโหลดสลิปการโอนเงิน:</p>
-            <Upload 
-              name="file"
-              action="/upload.do" // URL สำหรับการอัพโหลด
-              onChange={handleUploadChange}
-            >
-              <Button icon={<UploadOutlined />}>คลิกเพื่ออัพโหลด</Button>
-            </Upload>
-          </div>
-        )}
+        <QRCode value={getQRCodeValue()} size={256} />
       </Modal>
     </div>
   );

@@ -6,14 +6,15 @@ import (
 	"gorm.io/gorm"
 )
 
-type Ticker struct {
+type Ticket struct {
 	gorm.Model
 
 	Price float64
 	Purchase_date time.Time
+	Quantity int
 
-	TypeID *uint
-	TickerType TickerType
+	TicketTypeID *uint
+    TicketType  TicketType
 
 	MemberID *uint
 	Member Member

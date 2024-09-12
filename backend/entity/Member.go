@@ -16,7 +16,7 @@ type Member struct {
 	Last_name string
 	Birthday time.Time
 
-	Tickets []Ticker
+	Tickets []Ticket
 
 	Smss []Sms
 

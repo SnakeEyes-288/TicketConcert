@@ -1,4 +1,4 @@
-module example.com/sa-67-example
+module github.com/SnakeEyes-288/sa-67-example
 
 go 1.22.5
 

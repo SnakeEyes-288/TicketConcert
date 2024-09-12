@@ -2,15 +2,17 @@ package controller
 
 import (
 	"net/http"
-
-	"github.com/gin-gonic/gin"
-	//"github.com/SnakeEyes-288/sa-67-example/config"
+	//"time"
+	//"gorm.io/gorm"
+	"github.com/SnakeEyes-288/sa-67-example/config"
 	"github.com/SnakeEyes-288/sa-67-example/entity"
+	"github.com/gin-gonic/gin"
 	//example.com/sa-67-example/entity
 )
 
+
 // POST /users
-func CreateUser(c *gin.Context) {
+func CreateMember(c *gin.Context) {
 	var user entity.Member
 
 	// bind เข้าตัวแปร user
@@ -21,27 +23,24 @@ func CreateUser(c *gin.Context) {
 
 	db := config.DB()
 
-	// ค้นหา gender ด้วย id
-	var gender entity.Gender
-	db.First(&gender, user.GenderID)
-	if gender.ID == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": "gender not found"})
+	// เข้ารหัสลับรหัสผ่านที่ผู้ใช้กรอกก่อนบันทึกลงฐานข้อมูล
+	hashedPassword, err := config.HashPassword(user.Password)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
 		return
 	}
 
-	// เข้ารหัสลับรหัสผ่านที่ผู้ใช้กรอกก่อนบันทึกลงฐานข้อมูล
-	hashedPassword, _ := config.HashPassword(user.Password)
-
-	// สร้าง User
-	u := entity.User{
-		FirstName: user.FirstName, // ตั้งค่าฟิลด์ FirstName
-		LastName:  user.LastName,  // ตั้งค่าฟิลด์ LastName
-		Email:     user.Email,     // ตั้งค่าฟิลด์ Email
-		Password:  hashedPassword,
-		BirthDay:  user.BirthDay,
-		Profile:   user.Profile, // ตั้งค่าฟิลด์ Profile
-		GenderID:  user.GenderID,
-		Gender:    gender, // โยงความสัมพันธ์กับ Entity Gender
+	// สร้าง Member โดยใช้ข้อมูลที่ได้รับจากผู้ใช้
+	u := entity.Member{
+		//Model:      gorm.Model{},
+		Username:   user.Username,
+		Password:   hashedPassword,
+		Email:      user.Email,
+		First_name: user.First_name,
+		Last_name:  user.Last_name,
+		Birthday:   user.Birthday,
+		Tickets:    []entity.Ticket{},
+		Smss:       []entity.Sms{},
 	}
 
 	// บันทึก
@@ -53,55 +52,50 @@ func CreateUser(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": "Created success", "data": u})
 }
 
+// GET /users
 // GET /user/:id
 func GetUser(c *gin.Context) {
 	ID := c.Param("id")
-	var user entity.User
+	var user entity.Member
 
 	db := config.DB()
-	results := db.Preload("Gender").First(&user, ID)
+	results := db.First(&user, ID)
 	if results.Error != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": results.Error.Error()})
 		return
 	}
-	if user.ID == 0 {
-		c.JSON(http.StatusNoContent, gin.H{})
-		return
-	}
+
 	c.JSON(http.StatusOK, user)
 }
 
 // GET /users
 func ListUsers(c *gin.Context) {
-
-	var users []entity.User
+	var users []entity.Member
 
 	db := config.DB()
-	results := db.Preload("Gender").Find(&users)
+	results := db.Find(&users)
 	if results.Error != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": results.Error.Error()})
 		return
 	}
+
 	c.JSON(http.StatusOK, users)
 }
 
 // DELETE /users/:id
 func DeleteUser(c *gin.Context) {
-
 	id := c.Param("id")
 	db := config.DB()
-	if tx := db.Exec("DELETE FROM users WHERE id = ?", id); tx.RowsAffected == 0 {
+	if tx := db.Delete(&entity.Member{}, id); tx.RowsAffected == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "id not found"})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Deleted successful"})
-
 }
 
-// PATCH /users
+// PATCH /users/:id
 func UpdateUser(c *gin.Context) {
-	var user entity.User
-
+	var user entity.Member
 	UserID := c.Param("id")
 
 	db := config.DB()

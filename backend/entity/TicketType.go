@@ -2,12 +2,11 @@ package entity
 
 import "gorm.io/gorm"
 
-type TickerType struct {
+type TicketType struct {
 	gorm.Model
 
 	Type_name string
 	Description string
 
-	Tickers []Ticker
-
+	Tickets []Ticket `gorm:"foreignKey:TicketTypeID"`
 }

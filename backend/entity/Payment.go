@@ -11,9 +11,10 @@ type Payment struct {
 
 	Payment_method string
 	Payment_date time.Time
-	Amount float64
+	Payment_status string
+	Total_price float64
 
-	TickerID *uint
-	Ticker Ticker
+	TicketID *uint
+	Ticket Ticket
 
 }
