@@ -1,4 +1,4 @@
-package users
+package controller
 
 import (
 	"errors"
@@ -114,22 +114,14 @@ func SignUp(c *gin.Context) {
 
    Member := entity.Member{
 
-	   UserName: payload.UserName,
-
-       FirstName: payload.FirstName,
-
-       LastName:  payload.LastName,
-
-       Email:     payload.Email,
-
-       //Age:       payload.Age,
-
-       Password:  hashedPassword,
-
-       BirthDay:  payload.BirthDay,
-
-       //GenderID:  payload.GenderID,
-
+   	Username:   payload.UserName,
+   	Password:   hashedPassword,
+   	Email:      payload.Email,
+   	First_name: payload.FirstName,
+   	Last_name:  payload.LastName,
+   	Birthday:   payload.BirthDay,
+   	//Tickets:    []entity.Ticket{},
+   	//Smss:       []entity.Sms{},
    }
 
 
