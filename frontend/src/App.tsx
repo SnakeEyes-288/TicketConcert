@@ -8,6 +8,7 @@ import Register from './pages/Member/Register';
 import TicketInformation from './pages/TicketInformation';
 import { UserProvider } from './components/UserContext'; // นำเข้า UserProvider
 import { PrivateRoute } from './components/PrivateRoute'; // ใช้ named import แทน default import
+import RefundRequest from './pages/Refund/RefundRequest';
 
 
 const App: React.FC = () => {
@@ -26,7 +27,12 @@ const App: React.FC = () => {
             <Route path="/concerts" element={<ConcertSelection />} />
             <Route path="/select-seats" element={<SeatSelection />} />
             <Route path="/payment" element={<Payment />} />
+<<<<<<< HEAD
             <Route path="/TicketInformation" element={<TicketInformation />} />
+=======
+            <Route path="/payment-history" element={<PaymentHistory />} />
+            <Route path="/refund-request" element={<RefundRequest />} />
+>>>>>>> 5f2e1b3dc6527171c2b343a58ba53d1d01526c9a
           </Route>
 
           {/* เปลี่ยนเส้นทางหน้าแรกไปที่ Login */}
