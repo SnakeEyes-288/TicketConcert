@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"errors"
+	//"errors"
 
 	"net/http"
 
@@ -14,7 +14,7 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
-	"gorm.io/gorm"
+	//"gorm.io/gorm"
 
 	//"example.com/sa-67-example/config"
 
@@ -37,107 +37,68 @@ type (
 
    signUp struct {
 
-	   UserName  string    `json:"user_name"`
-
-       FirstName string    `json:"first_name"`
-
-       LastName  string    `json:"last_name"`
-
-       Email     string    `json:"email"`
-
-       //Age       uint8     `json:"age"`
-
-       Password  string    `json:"password"`
-
-       BirthDay  time.Time `json:"birthday"`
-
-       //GenderID  uint      `json:"gender_id"`
+    Username  string    `json:"username"`
+    Password  string    `json:"password"`
+    Email     string    `json:"email"`
+    FirstName string    `json:"first_name"`
+    LastName  string    `json:"last_name"`
+    BirthDay  string    `json:"birthday"`
 
    }
 
 )
 
 
+func HashPassword(password string) (string, error) {
+    hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+    if err != nil {
+        return "", err
+    }
+    return string(hashedPassword), nil
+}
+
 func SignUp(c *gin.Context) {
+    var payload signUp
 
-   var payload signUp
+    if err := c.ShouldBindJSON(&payload); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
 
+    // Hash password
+    hashedPassword, err := HashPassword(payload.Password)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
+        return
+    }
 
-   // Bind JSON payload to the struct
+    // Convert birthday from string to time.Time
+    birthday, err := time.Parse("2006-01-02", payload.BirthDay)
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid date format for birthday"})
+        return
+    }
 
-   if err := c.ShouldBindJSON(&payload); err != nil {
+    // Create member
+    Member := entity.Member{
+        Username:  payload.Username,
+        Password:  hashedPassword,
+        Email:     payload.Email,
+        FirstName: payload.FirstName, // ใช้ฟิลด์ FirstName
+        LastName:  payload.LastName,  // ใช้ฟิลด์ LastName
+        Birthday:  birthday,
+    }
 
-       c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+    // Get DB instance
+    db := config.DB()
 
-       return
+    // Save member to the database
+    if err := db.Create(&Member).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Registration failed. Please try again."})
+        return
+    }
 
-   }
-
-
-   db := config.DB()
-
-   var userCheck entity.Member
-
-
-   // Check if the user with the provided email already exists
-
-   result := db.Where("email = ?", payload.Email).First(&userCheck)
-
-   if result.Error != nil && !errors.Is(result.Error, gorm.ErrRecordNotFound) {
-
-       // If there's a database error other than "record not found"
-
-       c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
-
-       return
-
-   }
-
-
-   if userCheck.ID != 0 {
-
-       // If the user with the provided email already exists
-
-       c.JSON(http.StatusConflict, gin.H{"error": "Email is already registered"})
-
-       return
-
-   }
-
-
-   // Hash the user's password
-
-   hashedPassword, _ := config.HashPassword(payload.Password)
-
-
-   // Create a new user
-
-   Member := entity.Member{
-
-   	Username:   payload.UserName,
-   	Password:   hashedPassword,
-   	Email:      payload.Email,
-   	First_name: payload.FirstName,
-   	Last_name:  payload.LastName,
-   	Birthday:   payload.BirthDay,
-   	//Tickets:    []entity.Ticket{},
-   	//Smss:       []entity.Sms{},
-   }
-
-
-   // Save the Member to the database
-
-   if err := db.Create(&Member).Error; err != nil {
-
-       c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-
-       return
-
-   }
-
-
-   c.JSON(http.StatusCreated, gin.H{"message": "Sign-up successful"})
-
+    c.JSON(http.StatusOK, gin.H{"message": "Registration successful!"})
 }
 
 
@@ -158,7 +119,7 @@ func SignIn(c *gin.Context) {
 
    // ค้นหา user ด้วย Username ที่ผู้ใช้กรอกเข้ามา
 
-   if err := config.DB().Raw("SELECT * FROM Member WHERE email = ?", payload.Email).Scan(&user).Error; err != nil {
+   if err := config.DB().Raw("SELECT * FROM members WHERE email = ?", payload.Email).Scan(&user).Error; err != nil {
 
        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 

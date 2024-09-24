@@ -1,8 +1,7 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
-//import App from './App'; // ต้องแน่ใจว่าเส้นทางนี้ถูกต้อง
-import './index.css'; // ถ้ามีไฟล์ CSS
+import ReactDOM from 'react-dom/client'; // ใช้ API ใหม่
 import App from './App';
-//import './App.css'; // ตัวอย่างการ import ไฟล์ CSS ใน React
 
-ReactDOM.render(<App />, document.getElementById('root'));
+const container = document.getElementById('root');
+const root = ReactDOM.createRoot(container!); // สร้าง root element
+root.render(<App />);

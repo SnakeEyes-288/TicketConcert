@@ -65,3 +65,18 @@ func DeleteSms(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Sms deleted successfully"})
 }
+
+//func SendTicketEmail(member entity.Member, ticket entity.Ticket) error {
+    //m := gomail.NewMessage()
+    //m.SetHeader("From", "your-email@example.com")
+    //m.SetHeader("To", member.Email)
+    //m.SetHeader("Subject", "Your Concert Ticket")
+    //m.SetBody("text/html", fmt.Sprintf("You have successfully purchased a ticket for the concert. Ticket details: Seat %s, Concert: %s", ticket.Seat.SeatNumber, ticket.Concert.Name))
+
+    //d := gomail.NewDialer("smtp.example.com", 587, "your-email@example.com", "your-password")
+
+    //if err := d.DialAndSend(m); err != nil {
+    //    return err
+    //}
+    //return nil
+//}

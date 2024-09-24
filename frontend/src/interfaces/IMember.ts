@@ -1,9 +1,9 @@
 export interface MemberInterface {
     ID?: number;
-    UserName?: string;
-    Password?: string;
-    Email?: string;
-    FirstName?: string;
-    LastName?: string;
-    BirthDay?: string;
+    username?: string;
+    password?: string;
+    email?: string;
+    first_name?: string;
+    last_name?: string;
+    birthDay?: string;
 }

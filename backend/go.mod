@@ -2,8 +2,9 @@ module github.com/SnakeEyes-288/sa-67-example
 
 go 1.22.5
 
+require gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
+
 require (
-	github.com/SnakeEyes-288/sa-67-example v0.0.0-20240901114614-f3b8c8825ad6 // indirect
 	github.com/bytedance/sonic v1.12.2 // indirect
 	github.com/bytedance/sonic/loader v0.2.0 // indirect
 	github.com/cloudwego/base64x v0.1.4 // indirect
@@ -35,6 +36,7 @@ require (
 	golang.org/x/sys v0.24.0 // indirect
 	golang.org/x/text v0.17.0 // indirect
 	google.golang.org/protobuf v1.34.2 // indirect
+	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/driver/sqlite v1.5.6 // indirect
 	gorm.io/gorm v1.25.11 // indirect

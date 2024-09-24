@@ -1,79 +1,67 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CreateMember } from "../../../services/https";
+import { MemberInterface } from "../../../interfaces/IMember";
+import { Form, Input, DatePicker, Button, Typography, Alert, Spin } from 'antd';
+
+
+const { Title } = Typography;
 
 const Register: React.FC = () => {
-    const [firstName, setFirstName] = useState('');
-    const [lastName, setLastName] = useState('');
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
     const [error, setError] = useState('');
-    const navigate = useNavigate();  // ใช้เพื่อ redirect หลังจาก register สำเร็จ
+    const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
 
-    const handleSubmit = async (event: React.FormEvent) => {
-        event.preventDefault();
-
-        const memberData = {
-            First_name: firstName,
-            Last_name: lastName,
-            Email: email,
-            Password: password,
+    const handleSubmit = async (values: any) => {
+        const memberData: MemberInterface = {
+            username: values.username.trim(),
+            password: values.password,
+            email: values.email.trim(),
+            first_name: values.firstName.trim(),
+            last_name: values.lastName.trim(),
+            birthDay: values.birthday ? values.birthday.format('YYYY-MM-DD') : '',
         };
 
+        setLoading(true);
         const res = await CreateMember(memberData);
+        setLoading(false);
 
         if (res) {
-            console.log("Register success", res);
-            // หลังจาก register สำเร็จ ให้ผู้ใช้กลับไปที่หน้า login
             navigate("/login");
         } else {
-            setError("Registration failed. Please try again.");
+            setError(res.message || "Registration failed. Please try again.");
         }
     };
 
     return (
-        <div className="register-container">
-            <h2>Register</h2>
-            {error && <p style={{color: 'red'}}>{error}</p>}
-            <form onSubmit={handleSubmit}>
-                <div>
-                    <label>First Name:</label>
-                    <input 
-                        type="text" 
-                        value={firstName} 
-                        onChange={(e) => setFirstName(e.target.value)} 
-                        required 
-                    />
-                </div>
-                <div>
-                    <label>Last Name:</label>
-                    <input 
-                        type="text" 
-                        value={lastName} 
-                        onChange={(e) => setLastName(e.target.value)} 
-                        required 
-                    />
-                </div>
-                <div>
-                    <label>Email:</label>
-                    <input 
-                        type="email" 
-                        value={email} 
-                        onChange={(e) => setEmail(e.target.value)} 
-                        required 
-                    />
-                </div>
-                <div>
-                    <label>Password:</label>
-                    <input 
-                        type="password" 
-                        value={password} 
-                        onChange={(e) => setPassword(e.target.value)} 
-                        required 
-                    />
-                </div>
-                <button type="submit">Register</button>
-            </form>
+        <div style={{ maxWidth: '400px', margin: 'auto', padding: '20px' }}>
+            <Title level={2}>Register</Title>
+            {error && <Alert message={error} type="error" showIcon />}
+            <Form onFinish={handleSubmit} layout="vertical">
+                <Form.Item label="Username" name="username" rules={[{ required: true }]}>
+                    <Input />
+                </Form.Item>
+                <Form.Item label="First Name" name="firstName" rules={[{ required: true }]}>
+                    <Input />
+                </Form.Item>
+                <Form.Item label="Last Name" name="lastName" rules={[{ required: true }]}>
+                    <Input />
+                </Form.Item>
+                <Form.Item label="Email" name="email" rules={[{ type: 'email', required: true }]}>
+                    <Input />
+                </Form.Item>
+                <Form.Item label="Password" name="password" rules={[{ required: true, min: 6 }]}>
+                    <Input.Password />
+                </Form.Item>
+                <Form.Item label="Birthday" name="birthday" rules={[{ required: true }]}>
+                    <DatePicker format="YYYY-MM-DD" />
+                </Form.Item>
+                <Form.Item>
+                    <Button type="primary" htmlType="submit" block loading={loading}>
+                        {loading ? <Spin /> : 'Register'}
+                    </Button>
+                </Form.Item>
+            </Form>
         </div>
     );
 };

@@ -1,8 +1,9 @@
 export interface PaymentInterface {
-    ID?: number;
-    PaymentMethod?: string;
-    PaymentDate?: string;
-    PaymentStatus?: string;
-    TotalPrice?: number;
-    TicketID?: number;
+    ID?: number;              
+    PaymentMethod?: string;   
+    PaymentDate?: string;     
+    Status?: string;   
+    Quantity?: number;
+    Amount?: number;
+    SlipImage?:string;
 }

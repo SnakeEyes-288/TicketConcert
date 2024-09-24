@@ -2,66 +2,82 @@ package controller
 
 import (
 	"net/http"
-	"github.com/gin-gonic/gin"
+	"path/filepath"
+
 	"github.com/SnakeEyes-288/sa-67-example/config"
 	"github.com/SnakeEyes-288/sa-67-example/entity"
+	"github.com/gin-gonic/gin"
 )
 
-// POST /payments
-func CreatePayment(c *gin.Context) {
-	var payment entity.Payment
+type CreatePaymentRequest struct {
+	Payment entity.Payment  `json:"payment"`
+	Tickets []entity.Ticket `json:"tickets"` // เพิ่ม field สำหรับตั๋ว
+}
 
-	if err := c.ShouldBindJSON(&payment); err != nil {
+func CreatePayment(c *gin.Context) {
+	var request CreatePaymentRequest
+
+	// Bind ข้อมูล JSON ที่ถูกส่งมา
+	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	db := config.DB()
+	// ตรวจสอบว่ามีการอัพโหลดไฟล์สลิปหรือไม่
+	file, err := c.FormFile("slip")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to upload slip"})
+		return
+	}
 
+	// ตั้งค่า path ที่จะบันทึกไฟล์สลิป
+    filePath := filepath.Join("uploads", file.Filename)
+
+
+	// สร้างข้อมูลการชำระเงิน
+	payment := request.Payment
+	payment.SlipURL = filePath // เก็บ path ของสลิปที่ถูกอัพโหลด
+
+	// บันทึกข้อมูลการชำระเงิน
+	db := config.DB()
 	if err := db.Create(&payment).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
+	// บันทึกตั๋วที่เกี่ยวข้อง
+	tickets := request.Tickets
+	for _, ticket := range tickets {
+		ticket.PaymentID = &payment.ID
+		if err := db.Create(&ticket).Error; err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+	}
+
 	c.JSON(http.StatusCreated, gin.H{"data": payment})
 }
 
-// GET /payments/:id
-func GetPayment(c *gin.Context) {
-	var payment entity.Payment
-	id := c.Param("id")
-
-	db := config.DB()
-	if err := db.First(&payment, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Payment not found"})
+func UploadPaymentSlip(c *gin.Context) {
+	// รับไฟล์จากฟอร์ม
+	file, err := c.FormFile("slip")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ไม่พบไฟล์สลิปโอนเงิน"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": payment})
-}
+	// ตั้งค่า path ที่จะบันทึกไฟล์
+	filePath := filepath.Join("uploads", file.Filename)
 
-// GET /payments
-func ListPayments(c *gin.Context) {
-	var payments []entity.Payment
-
-	db := config.DB()
-	if err := db.Find(&payments).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to retrieve payments"})
+	// บันทึกไฟล์ไปยัง path ที่กำหนด
+	if err := c.SaveUploadedFile(file, filePath); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถบันทึกไฟล์ได้"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": payments})
-}
-
-// DELETE /payments/:id
-func DeletePayment(c *gin.Context) {
-	id := c.Param("id")
-
-	db := config.DB()
-	if tx := db.Delete(&entity.Payment{}, id); tx.RowsAffected == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Payment not found"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "Payment deleted successfully"})
+	// ส่ง response กลับพร้อม path ของไฟล์ที่ถูกอัปโหลด
+	c.JSON(http.StatusOK, gin.H{
+		"message":  "อัปโหลดสลิปสำเร็จ",
+		"filePath": "/uploads/" + file.Filename, // ส่งเส้นทางไฟล์ที่สามารถเข้าถึงได้
+	})
 }

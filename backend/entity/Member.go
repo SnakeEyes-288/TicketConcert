@@ -1,23 +1,19 @@
 package entity
 
 import (
-	"time"
-
-	"gorm.io/gorm"
+    "time"
+    "gorm.io/gorm"
 )
 
 type Member struct {
-	gorm.Model
+    gorm.Model
+    Username   string
+    Password   string
+    Email      string
+    FirstName  string
+    LastName   string
+    Birthday   time.Time
 
-	Username string
-	Password string
-	Email string
-	First_name string
-	Last_name string
-	Birthday time.Time
-
-	Tickets []Ticket
-
-	Smss []Sms
-
+    Tickets []Ticket
+    Smss []Sms
 }

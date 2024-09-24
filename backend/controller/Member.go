@@ -11,46 +11,39 @@ import (
 )
 
 
-// POST /users
 func CreateMember(c *gin.Context) {
-	var user entity.Member
+    var user entity.Member
 
-	// bind เข้าตัวแปร user
-	if err := c.ShouldBindJSON(&user); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
+    if err := c.ShouldBindJSON(&user); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
 
-	db := config.DB()
+    db := config.DB()
 
-	// เข้ารหัสลับรหัสผ่านที่ผู้ใช้กรอกก่อนบันทึกลงฐานข้อมูล
-	hashedPassword, err := config.HashPassword(user.Password)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
-		return
-	}
+    hashedPassword, err := config.HashPassword(user.Password)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
+        return
+    }
 
-	// สร้าง Member โดยใช้ข้อมูลที่ได้รับจากผู้ใช้
-	u := entity.Member{
-		//Model:      gorm.Model{},
-		Username:   user.Username,
-		Password:   hashedPassword,
-		Email:      user.Email,
-		First_name: user.First_name,
-		Last_name:  user.Last_name,
-		Birthday:   user.Birthday,
-		Tickets:    []entity.Ticket{},
-		Smss:       []entity.Sms{},
-	}
+    u := entity.Member{
+        Username:  user.Username,
+        Password:  hashedPassword,
+        Email:     user.Email,
+        FirstName: user.FirstName,
+        LastName:  user.LastName,
+        Birthday:  user.Birthday,
+    }
 
-	// บันทึก
-	if err := db.Create(&u).Error; err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
+    if err := db.Create(&u).Error; err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
 
-	c.JSON(http.StatusCreated, gin.H{"message": "Created success", "data": u})
+    c.JSON(http.StatusCreated, gin.H{"message": "Created success", "data": u})
 }
+
 
 // GET /users
 // GET /user/:id

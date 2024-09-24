@@ -2,7 +2,7 @@ export interface TicketInterface{
     ID?: number;
     Price?: number;
     PurchaseDate?: string;
-    Quantity?: number;
-    TicketTypeID?: number;
+    SeatID?: number;
     MemberID?: number;
+    PaymentID?: number;
 }

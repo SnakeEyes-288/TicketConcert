@@ -1,23 +1,21 @@
 package entity
 
 import (
-	"time"
-
-	"gorm.io/gorm"
+    "gorm.io/gorm"
+    "time"
 )
 
 type Ticket struct {
-	gorm.Model
+    gorm.Model
+    Price        float64   // ราคาตั๋ว
+    PurchaseDate time.Time // วันที่ซื้อ
 
-	Price float64
-	Purchase_date time.Time
-	Quantity int
+    SeatID       *uint     // Foreign Key ชี้ไปที่ที่นั่ง
+    Seat         Seat      // ความสัมพันธ์ One-to-One กับที่นั่ง
+    
+    MemberID     *uint     // Foreign Key ชี้ไปที่สมาชิกที่ซื้อ
+    Member Member
 
-	TicketTypeID *uint
-    TicketType  TicketType
-
-	MemberID *uint
-	Member Member
-
-	Payments []Payment
+    PaymentID    *uint      // Foreign Key ชี้ไปที่การชำระเงิน
+    Payment  Payment
 }

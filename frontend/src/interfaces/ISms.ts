@@ -1,7 +1,7 @@
 export interface SmsInterface{
     ID?: number;
-    PhoneNumber?: string;
-    MessageContent?: string;
-    SentDate?: string;
-    MemberID?: number;
+    phone_number?: string;
+    message_content?: string;
+    sent_date?: string;
+    member_id?: number;
 }
