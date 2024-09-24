@@ -8,7 +8,7 @@ import Login from './pages/Member/Login';
 import Register from './pages/Member/Register';
 import { UserProvider } from './components/UserContext'; // นำเข้า UserProvider
 import { PrivateRoute } from './components/PrivateRoute'; // ใช้ named import แทน default import
-import RefundRequest from './page/refund/RefundRequest';
+import RefundRequest from './pages/Refund/RefundRequest';
 
 
 const App: React.FC = () => {
@@ -28,6 +28,7 @@ const App: React.FC = () => {
             <Route path="/select-seats" element={<SeatSelection />} />
             <Route path="/payment" element={<Payment />} />
             <Route path="/payment-history" element={<PaymentHistory />} />
+            <Route path="/refund-request" element={<RefundRequest />} />
           </Route>
 
           {/* เปลี่ยนเส้นทางหน้าแรกไปที่ Login */}
