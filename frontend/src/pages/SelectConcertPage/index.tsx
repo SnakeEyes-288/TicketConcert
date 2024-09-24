@@ -35,6 +35,11 @@ const ConcertSelection: React.FC = () => {
     navigate('/select-seats', { state: { selectedConcert: concert } });
   };
 
+  // Navigate to payment history
+  const handleViewPaymentHistory = () => {
+    navigate('/payment-history');
+  };
+
   // การโหลดข้อมูล
   if (loading) {
     return (
@@ -49,6 +54,12 @@ const ConcertSelection: React.FC = () => {
       <Title level={2} style={{ textAlign: 'center', marginBottom: '40px', color: '#1890ff' }}>
         เลือกคอนเสิร์ตที่คุณสนใจ
       </Title>
+
+      <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+        <Button type="primary" onClick={handleViewPaymentHistory}>
+          ดูประวัติการชำระเงิน
+        </Button>
+      </div>
 
       {error && <Alert message={error} type="error" style={{ marginBottom: '20px' }} />}
 

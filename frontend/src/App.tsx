@@ -3,9 +3,9 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import ConcertSelection from './pages/SelectConcertPage';
 import SeatSelection from './pages/SelectSeatPage';
 import Payment from './pages/Payment';
-import PaymentHistory from './pages/PaymentHistory';
 import Login from './pages/Member/Login';
 import Register from './pages/Member/Register';
+import TicketInformation from './pages/TicketInformation';
 import { UserProvider } from './components/UserContext'; // นำเข้า UserProvider
 import { PrivateRoute } from './components/PrivateRoute'; // ใช้ named import แทน default import
 
@@ -26,7 +26,7 @@ const App: React.FC = () => {
             <Route path="/concerts" element={<ConcertSelection />} />
             <Route path="/select-seats" element={<SeatSelection />} />
             <Route path="/payment" element={<Payment />} />
-            <Route path="/payment-history" element={<PaymentHistory />} />
+            <Route path="/TicketInformation" element={<TicketInformation />} />
           </Route>
 
           {/* เปลี่ยนเส้นทางหน้าแรกไปที่ Login */}

@@ -1,83 +1,121 @@
 package controller
 
 import (
+	"encoding/base64"
 	"net/http"
+	"os"
 	"path/filepath"
+	"strings"
+
+	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 
 	"github.com/SnakeEyes-288/sa-67-example/config"
 	"github.com/SnakeEyes-288/sa-67-example/entity"
-	"github.com/gin-gonic/gin"
 )
 
 type CreatePaymentRequest struct {
-	Payment entity.Payment  `json:"payment"`
-	Tickets []entity.Ticket `json:"tickets"` // เพิ่ม field สำหรับตั๋ว
+	Payment entity.Payment  `json:"payment"` // ต้องใช้ `json` tag เพื่อให้ Bind ได้
+	Tickets []entity.Ticket `json:"tickets"`
 }
 
 func CreatePayment(c *gin.Context) {
 	var request CreatePaymentRequest
 
-	// Bind ข้อมูล JSON ที่ถูกส่งมา
+	// รับข้อมูล JSON จาก body
 	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid payment or tickets data"})
 		return
 	}
 
-	// ตรวจสอบว่ามีการอัพโหลดไฟล์สลิปหรือไม่
-	file, err := c.FormFile("slip")
+	// ตรวจสอบว่าได้ส่ง SlipImage มาใน request หรือไม่
+	if request.Payment.SlipImage == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "SlipImage is required"})
+		return
+	}
+
+	// ทำการลบ prefix "data:image/jpeg;base64," และ "data:image/png;base64," ถ้ามี
+	if strings.HasPrefix(request.Payment.SlipImage, "data:image/jpeg;base64,") {
+		request.Payment.SlipImage = strings.TrimPrefix(request.Payment.SlipImage, "data:image/jpeg;base64,")
+	} else if strings.HasPrefix(request.Payment.SlipImage, "data:image/png;base64,") {
+		request.Payment.SlipImage = strings.TrimPrefix(request.Payment.SlipImage, "data:image/png;base64,")
+	} else {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Unsupported image format"})
+		return
+	}
+
+	// แปลง Base64 เป็นไฟล์
+	decodedImage, err := base64.StdEncoding.DecodeString(request.Payment.SlipImage)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to upload slip"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid SlipImage data", "details": err.Error()})
 		return
 	}
 
-	// ตั้งค่า path ที่จะบันทึกไฟล์สลิป
-    filePath := filepath.Join("uploads", file.Filename)
+	// ตรวจสอบว่า decodedImage มีข้อมูลหรือไม่
+	if len(decodedImage) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Decoded SlipImage is empty"})
+		return
+	}
 
+	// บันทึกไฟล์สลิปไปยังโฟลเดอร์ "uploads"
+	filePath := filepath.Join("uploads", "slip.png") // ตั้งชื่อไฟล์เป็น slip.png หรือปรับตามต้องการ
+	if err := os.WriteFile(filePath, decodedImage, 0644); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to save slip"})
+		return
+	}
 
-	// สร้างข้อมูลการชำระเงิน
+	// ตั้งค่า SlipImage ให้กับ Payment
 	payment := request.Payment
-	payment.SlipURL = filePath // เก็บ path ของสลิปที่ถูกอัพโหลด
+	payment.SlipImage = filePath // ใช้ SlipImage แทน SlipURL
 
-	// บันทึกข้อมูลการชำระเงิน
+	// ตรวจสอบว่าฟิลด์ต่างๆ ของ Payment ถูกต้องหรือไม่
+	if payment.PaymentMethod == "" || payment.Amount <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "PaymentMethod or Amount is missing or invalid"})
+		return
+	}
+
+	// เริ่มต้นการทำธุรกรรม
 	db := config.DB()
-	if err := db.Create(&payment).Error; err != nil {
+	err = db.Transaction(func(tx *gorm.DB) error {
+		// บันทึกข้อมูล Payment ลงในฐานข้อมูล
+		if err := tx.Create(&payment).Error; err != nil {
+			return err
+		}
+
+		// บันทึกข้อมูล Tickets โดยเชื่อมโยงกับ Payment ID
+		for _, ticket := range request.Tickets {
+			ticket.PaymentID = &payment.ID
+			if err := tx.Create(&ticket).Error; err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	// หากเกิดข้อผิดพลาดระหว่างการทำธุรกรรม
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// บันทึกตั๋วที่เกี่ยวข้อง
-	tickets := request.Tickets
-	for _, ticket := range tickets {
-		ticket.PaymentID = &payment.ID
-		if err := db.Create(&ticket).Error; err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-	}
-
+	// ส่งข้อมูลการชำระเงินกลับไปในกรณีที่ทำงานสำเร็จ
 	c.JSON(http.StatusCreated, gin.H{"data": payment})
 }
 
-func UploadPaymentSlip(c *gin.Context) {
-	// รับไฟล์จากฟอร์ม
-	file, err := c.FormFile("slip")
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "ไม่พบไฟล์สลิปโอนเงิน"})
+// GetPaymentsByMemberID ดึงข้อมูลการชำระเงินตาม MemberID
+func GetPaymentsByMemberID(c *gin.Context) {
+	memberID := c.Param("id") // รับ MemberID จากพารามิเตอร์ใน URL
+
+	var payments []entity.Payment
+	db := config.DB()
+
+	// ค้นหาการชำระเงินทั้งหมดที่เชื่อมโยงกับ MemberID
+	if err := db.Preload("Tickets").Where("id = ?", memberID).Find(&payments).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ไม่พบข้อมูลการชำระเงิน"})
 		return
 	}
 
-	// ตั้งค่า path ที่จะบันทึกไฟล์
-	filePath := filepath.Join("uploads", file.Filename)
-
-	// บันทึกไฟล์ไปยัง path ที่กำหนด
-	if err := c.SaveUploadedFile(file, filePath); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถบันทึกไฟล์ได้"})
-		return
-	}
-
-	// ส่ง response กลับพร้อม path ของไฟล์ที่ถูกอัปโหลด
-	c.JSON(http.StatusOK, gin.H{
-		"message":  "อัปโหลดสลิปสำเร็จ",
-		"filePath": "/uploads/" + file.Filename, // ส่งเส้นทางไฟล์ที่สามารถเข้าถึงได้
-	})
+	// ส่งข้อมูลการชำระเงินกลับในรูปแบบ JSON
+	c.JSON(http.StatusOK, gin.H{"data": payments})
 }

@@ -12,7 +12,6 @@ type Payment struct {
     Status        string    // สถานะการชำระเงิน
     Quantity      int       // จำนวนตั๋วที่ชำระเงิน
     Amount        float64   // ยอดเงินทั้งหมด
-    SlipURL       string    // URL หรือ path ของสลิปการชำระเงิน
-    
+    SlipImage       string    // URL หรือ path ของสลิปการชำระเงิน
     Tickets       []Ticket  `gorm:"foreignKey:PaymentID"` // ความสัมพันธ์ One-to-Many กับตั๋ว
 }

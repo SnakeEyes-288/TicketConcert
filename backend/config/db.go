@@ -81,12 +81,12 @@ func SetupDatabase() {
 			
 				seat := entity.Seat{
 					SeatNumber:  seatNumber,
-					ConcertID:   concert.ID,      // กำหนด ConcertID
+					ConcertID:   &concert.ID,      // กำหนด ConcertID
 					IsAvailable: true,
-					SeatTypeID:  seatType.ID,     // กำหนด SeatTypeID
+					SeatTypeID:  &seatType.ID,     // กำหนด SeatTypeID
 				}
 			
-				db.FirstOrCreate(&seat, &entity.Seat{SeatNumber: seatNumber, ConcertID: concert.ID})
+				db.FirstOrCreate(&seat, &entity.Seat{SeatNumber: seatNumber, ConcertID: &concert.ID})
 			}
 		}
 	}

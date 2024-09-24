@@ -68,57 +68,77 @@ async function CreateMember(data: MemberInterface) {
   }
 }
 
-async function CreatePayment(data: { payment: PaymentInterface; tickets: TicketInterface[] }) {
-  const formData = new FormData();
-
-  // ตรวจสอบว่าค่าที่ส่งมามีการกำหนดหรือไม่ก่อนใช้ FormData
-  if (data.payment.PaymentMethod) {
-    formData.append("PaymentMethod", data.payment.PaymentMethod);
+// ฟังก์ชันสำหรับสร้างการชำระเงิน
+async function CreatePayment(data: { payment: PaymentInterface; tickets: TicketInterface[] }) { 
+  // ตรวจสอบว่าข้อมูล PaymentMethod และ Amount ถูกต้อง
+  if (!data.payment.PaymentMethod || !data.payment.Amount) {
+    console.error('Error: Missing PaymentMethod or Amount.');
+    return false;
   }
 
-  if (data.payment.PaymentDate) {
-    formData.append("PaymentDate", data.payment.PaymentDate);
-  }
+  let requestBody: any;
 
-  formData.append("Amount", String(data.payment.Amount ?? 0));
-
-  // ตรวจสอบ SlipImage ก่อนแนบไฟล์ ถ้าไม่มีจะไม่ส่งค่าใดๆ
+  // ตรวจสอบว่าใช้ไฟล์ slip หรือไม่
   if (data.payment.SlipImage) {
-    formData.append("SlipImage", data.payment.SlipImage);
-  }
+    if (!data.payment.SlipImage.startsWith('data:image/')) {
+      console.error('Error: SlipImage format is not valid.');
+      return false;
+    }
 
-  // เพิ่มข้อมูลรายการ ticket ในรูปแบบ JSON (เพราะ FormData ไม่รองรับ array โดยตรง)
-  formData.append("Tickets", JSON.stringify(data.tickets));
+    try {
+      // แปลงสลิปเป็น Base64
+      const blob = await fetch(data.payment.SlipImage).then(res => res.blob());
+      const base64String = await convertBlobToBase64(blob);
+
+      // สร้าง JSON request body
+      requestBody = JSON.stringify({
+        payment: { ...data.payment, SlipImage: base64String }, // เพิ่ม Base64 ลงใน payment
+        tickets: data.tickets
+      });
+    } catch (error) {
+      console.error('Error converting slip to Base64:', error);
+      return false;
+    }
+  } else {
+    // กรณีที่ไม่มีไฟล์ slip, ส่งเป็น JSON
+    requestBody = JSON.stringify({
+      payment: data.payment,
+      tickets: data.tickets
+    });
+  }
 
   const requestOptions = {
     method: "POST",
+    body: requestBody,
     headers: {
-      ...getAuthHeaders(), // เพิ่ม headers การตรวจสอบตัวตน
+      Authorization: `Bearer ${localStorage.getItem("token")}`, // token ที่ต้องตรวจสอบ
+      "Content-Type": "application/json" // ระบุ Content-Type เป็น application/json
     },
-    body: formData, // ใช้ FormData แทน JSON
   };
 
   try {
     const response = await fetch(`${apiUrl}/payment`, requestOptions);
-
-    // ตรวจสอบการตอบกลับจากเซิร์ฟเวอร์
     if (!response.ok) {
       throw new Error(`Error: ${response.status} ${response.statusText}`);
     }
-
-    const result = await response.json(); // แปลงการตอบกลับเป็น JSON
+    const result = await response.json();
     return result;
   } catch (error) {
-    console.error("CreatePayment Error:", error);
-
-    // ตรวจสอบว่าข้อผิดพลาดเกิดจากการเชื่อมต่อเครือข่ายหรือไม่
-    if (error instanceof TypeError && error.message.includes('NetworkError')) {
-      console.error('Network error occurred');
-    }
-
-    return false; // ส่งกลับ false เมื่อเกิดข้อผิดพลาด
+    console.error('CreatePayment Error:', error);
+    return false;
   }
 }
+
+// ฟังก์ชันสำหรับแปลง Blob เป็น Base64
+const convertBlobToBase64 = (blob: Blob): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(blob);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (error) => reject(error);
+  });
+};
+
 
 
 // ฟังก์ชันสำหรับสร้างข้อความ SMS
@@ -226,6 +246,23 @@ async function GetSeatsByConsertId(id: Number | undefined) {
   return res;
 }
 
+// ฟังก์ชันสำหรับดึงข้อมูลที่นั่งจากแต่ล่ะคอนเสิร์ต
+async function GetPaymentByMemberId(id: Number | undefined) {
+  const requestOptions = {
+    method: "GET"
+  };
+
+  let res = await fetch(`${apiUrl}/payment/${id}`, requestOptions)
+    .then((res) => {
+      if (res.status === 200) {
+        return res.json();
+      } else {
+        return false;
+      }
+    });
+
+  return res;
+}
 
 
 
@@ -240,4 +277,5 @@ export {
   SignIn,
   GetConcert,
   GetSeatsByConsertId,
+  GetPaymentByMemberId
 };

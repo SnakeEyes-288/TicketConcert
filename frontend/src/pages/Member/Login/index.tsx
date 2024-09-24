@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState } from 'react'; 
 import { useNavigate, Link } from 'react-router-dom';
 import { Form, Input, Button, Typography, Row, Col, Card, Alert } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
-import { useUser } from '../../../components/UserContext';  // ดึงข้อมูลจาก UserContext
+import { useUser } from '../../../components/UserContext'; // ดึงข้อมูลจาก UserContext
 
 const { Title, Text } = Typography;
 
@@ -11,30 +11,30 @@ const SignIn: React.FC = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { setToken, setMemberID } = useUser();  // ใช้ setToken และ setMemberID จาก context
+  const { setToken, setMemberID } = useUser(); // ใช้ setToken และ setMemberID จาก context
   const navigate = useNavigate();
 
   const handleSubmit = async () => {
     setLoading(true);
     const loginData = { email, password };
-  
+
     const requestOptions = {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(loginData),
     };
-  
+
     try {
       const res = await fetch('http://localhost:8000/login', requestOptions);
-  
+
       if (res.ok) {
         const data = await res.json();
-        console.log("Login response data:", data); // แสดงข้อมูลที่ตอบกลับ
-  
-        setToken(data.token); // ตั้งค่า token
-        setMemberID(data.id); // ใช้ id เป็น MemberID
-        console.log("Member ID:", data.id); // แสดงค่าที่เก็บไว้เป็น MemberID
-  
+        
+        // บันทึก Token และ MemberID ลงใน UserContext
+        setToken(data.token);
+        setMemberID(data.id);
+
+        // เปลี่ยนเส้นทางไปยังหน้าประวัติการชำระเงิน
         navigate("/concerts");
       } else {
         const errorData = await res.json();
@@ -47,9 +47,6 @@ const SignIn: React.FC = () => {
       setLoading(false);
     }
   };
-  
-  
-  
 
   return (
     <Row justify="center" align="middle" style={{ minHeight: '100vh', backgroundColor: '#f0f2f5' }}>
@@ -61,17 +58,8 @@ const SignIn: React.FC = () => {
             <Alert message={error} type="error" showIcon style={{ marginBottom: '16px' }} />
           )}
 
-          <Form
-            name="login"
-            initialValues={{ remember: true }}
-            onFinish={handleSubmit}
-            layout="vertical"
-          >
-            <Form.Item
-              name="email"
-              label="Email"
-              rules={[{ required: true, message: 'Please input your email!' }]}
-            >
+          <Form name="login" onFinish={handleSubmit} layout="vertical">
+            <Form.Item name="email" label="Email" rules={[{ required: true, message: 'Please input your email!' }]}>
               <Input 
                 prefix={<UserOutlined />} 
                 type="email" 
@@ -84,11 +72,7 @@ const SignIn: React.FC = () => {
               />
             </Form.Item>
 
-            <Form.Item
-              name="password"
-              label="Password"
-              rules={[{ required: true, message: 'Please input your password!' }]}
-            >
+            <Form.Item name="password" label="Password" rules={[{ required: true, message: 'Please input your password!' }]}>
               <Input.Password 
                 prefix={<LockOutlined />} 
                 value={password} 

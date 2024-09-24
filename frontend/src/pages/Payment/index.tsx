@@ -1,40 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState } from 'react';       
 import { Button, Modal, Typography, Form, Input, Select, Card, notification, Upload } from 'antd';
-import { useNavigate, useLocation } from 'react-router-dom';
-import * as qrcode from 'qrcode';
-import { UploadOutlined } from '@ant-design/icons';
+import { useLocation } from 'react-router-dom';
+import { PlusOutlined } from '@ant-design/icons';
 import { CreatePayment, CreateTicket } from '../../services/https';
 import { PaymentInterface } from '../../interfaces/IPayment';
 import { TicketInterface } from '../../interfaces/ITicket';
 import { useUser } from '../../components/UserContext';
-import promptpay from 'promptpay-qr';
+import promptpay from 'promptpay-qr'; // นำเข้า promptpay
+import * as qrcode from 'qrcode'; // นำเข้า qrcode
 import { UploadFile } from 'antd';
-import { RcFile } from 'antd/lib/upload';
 
 const { Title } = Typography;
 const { Option } = Select;
 
-// สร้าง RcFile จาก File
-const toRcFile = (file: File): RcFile => {
-  const rcFile: RcFile = {
-    ...file, // คัดลอกคุณสมบัติของ File ทั้งหมด
-    uid: `${Date.now()}`, // เพิ่ม uid ที่ไม่ซ้ำกัน
-    lastModifiedDate: file.lastModified ? new Date(file.lastModified) : new Date(), // lastModifiedDate จาก File
-  };
-  return rcFile;
-};
-
 const Payment: React.FC = () => {
   const location = useLocation();
-  const {
-    selectedConcert = '',
-    selectedSeats = [],
-    selectedTicketType = '',
-    ticketQuantity = 1,
-    ticketPrice = 0,
-    seatTypeID = 0,
-  } = location.state || {};
-
+  const { selectedConcert = '', selectedSeats = [], selectedTicketType = '', ticketQuantity = 1, ticketPrice = 0, seatTypeID = 0 } = location.state || {};
   const { memberID } = useUser();
   const [form] = Form.useForm();
   const [paymentMethod, setPaymentMethod] = useState('เลือกวิธีการชำระเงิน');
@@ -42,65 +23,29 @@ const Payment: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   const [fileList, setFileList] = useState<UploadFile[]>([]);
-  const navigate = useNavigate();
 
-  const calculateAmount = () => {
-    const quantity = isNaN(ticketQuantity) ? 1 : ticketQuantity;
-    const price = isNaN(ticketPrice) ? 0 : ticketPrice;
-    return price * quantity;
+  const amount = calculateAmount(ticketPrice, ticketQuantity); // ส่งค่า ticketPrice และ ticketQuantity เข้าไป
+  
+  // ฟังก์ชันสำหรับการจัดการการเปลี่ยนแปลงของไฟล์อัปโหลด
+  const onChange = ({ fileList: newFileList }: { fileList: UploadFile[] }) => {
+    setFileList(newFileList);
   };
 
-  const handlePayment = async () => {
-    setLoading(true);
-    if (!memberID) {
-      notification.error({
-        message: 'เกิดข้อผิดพลาด',
-        description: 'ไม่พบข้อมูลสมาชิก โปรดเข้าสู่ระบบใหม่อีกครั้ง',
-      });
-      setLoading(false);
-      return;
-    }
-
-    const qrCode = await getQRCodeValue();
-    setQrCodeUrl(qrCode);
-    setIsModalVisible(true);
-    setLoading(false);
+  // ฟังก์ชันสำหรับแปลงไฟล์เป็น Base64
+  const getBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
   };
 
-  const uploadProps = {
-    beforeUpload: (file: File) => {
-      const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png';
-      
-      if (!isJpgOrPng) {
-        notification.error({
-          message: 'เกิดข้อผิดพลาด',
-          description: 'สามารถอัปโหลดเฉพาะไฟล์ JPG/PNG เท่านั้น',
-        });
-        return Upload.LIST_IGNORE; // ป้องกันไม่ให้ไฟล์ที่ไม่ใช่รูปภาพถูกอัปโหลด
-      }
-  
-      // สร้าง RcFile จาก File
-      const rcFile = toRcFile(file);
-  
-      const newFile: UploadFile<any> = {
-        uid: rcFile.uid,
-        name: rcFile.name,
-        status: 'done',
-        url: '', // หรือกำหนดเป็น URL ของไฟล์
-        originFileObj: rcFile, // เก็บ RcFile ไว้ใน originFileObj
-      };
-  
-      setFileList([newFile]); // เก็บไฟล์ที่อัปโหลดเข้ามา
-      return false; // หยุดการอัปโหลดอัตโนมัติ
-    },
-    fileList, // แสดงไฟล์ที่ถูกเลือก
-    onRemove: () => setFileList([]), // รีเซ็ตเมื่อไฟล์ถูกลบ
-  };
-  
+  // ฟังก์ชันการอัปโหลดสลิป
   const handleUploadSlip = async () => {
     setLoading(true);
   
-    if (!fileList.length) {
+    if (!fileList || fileList.length === 0) {
       notification.error({
         message: 'เกิดข้อผิดพลาด',
         description: 'กรุณาอัปโหลดสลิปการโอนเงิน',
@@ -109,49 +54,44 @@ const Payment: React.FC = () => {
       return;
     }
   
-    const file = fileList[0].originFileObj as File; // ใช้ File แท้จาก originFileObj
-  
-    // ตรวจสอบว่าไฟล์ถูกต้องหรือไม่
-    if (!file) {
+    const file = fileList[0]?.originFileObj;
+
+    if (!(file instanceof Blob)) {
       notification.error({
         message: 'เกิดข้อผิดพลาด',
-        description: 'ไม่สามารถเข้าถึงไฟล์ที่อัปโหลดได้ กรุณาลองใหม่อีกครั้ง',
+        description: 'ไฟล์ที่อัปโหลดไม่ถูกต้อง',
       });
       setLoading(false);
       return;
     }
   
     let slipImage = '';
-  
+
     try {
-      // แปลงไฟล์ให้เป็น Base64
-      slipImage = await getBase64(file);
-  
-      // ตรวจสอบผลลัพธ์ Base64
-      console.log("Base64 result:", slipImage);
+      slipImage = await getBase64(file); // แปลงไฟล์เป็น Base64
     } catch (error) {
       notification.error({
         message: 'เกิดข้อผิดพลาด',
         description: 'ไม่สามารถแปลงไฟล์ให้เป็น Base64 ได้',
       });
-      console.error('Base64 conversion error:', error);
       setLoading(false);
       return;
     }
-  
+
     const paymentData: PaymentInterface = {
       PaymentMethod: paymentMethod,
       PaymentDate: new Date().toISOString(),
       Status: 'Pending',
       Quantity: selectedSeats.length,
-      Amount: calculateAmount(),
-      SlipImage: slipImage, // ส่งค่า Base64 ไปยัง SlipImage
+      Amount: amount,
+      SlipImage: slipImage, // เพิ่มสลิปที่ถูกแปลงเป็น Base64
     };
 
+    console.log('Payment Data to Send:', paymentData); // Log the payment data being sent
+
     try {
-      console.log('Payment Data:', paymentData);
       const paymentRes = await CreatePayment({ payment: paymentData, tickets: [] });
-      console.log('Payment Response:', paymentRes);
+      console.log('Payment Response:', paymentRes); // Log the payment response
       if (paymentRes && paymentRes.data && paymentRes.data.ID) {
         const paymentID = paymentRes.data.ID;
         const ticketDataArray: TicketInterface[] = selectedSeats.map((seat: string) => ({
@@ -159,7 +99,6 @@ const Payment: React.FC = () => {
           PurchaseDate: new Date().toISOString(),
           Seat: { SeatNumber: seat },
           SeatTypeID: seatTypeID,
-          //ConcertID: concertID,
           PaymentID: paymentID,
           MemberID: memberID,
         }));
@@ -177,7 +116,7 @@ const Payment: React.FC = () => {
         });
       }
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error during payment creation:', error); // Log the error to the console
       notification.error({
         message: 'เกิดข้อผิดพลาด',
         description: 'เกิดข้อผิดพลาดในการสร้างการชำระเงินหรือตั๋ว',
@@ -188,68 +127,47 @@ const Payment: React.FC = () => {
     }
   };
 
-  const handleOk = () => {
-    setIsModalVisible(false);
-    navigate('/concerts');
+  const beforeUpload = (file: File) => {
+    const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png';
+    if (!isJpgOrPng) {
+      notification.error({
+        message: 'เกิดข้อผิดพลาด',
+        description: 'สามารถอัปโหลดเฉพาะไฟล์ JPG/PNG เท่านั้น',
+      });
+      return Upload.LIST_IGNORE;
+    }
+    return true; // ให้ทำการอัปโหลดไฟล์
   };
 
-  const getQRCodeValue = async () => {
-    const amount = calculateAmount();
-    const id = "1459901028579";
-    
+  // ฟังก์ชันจัดการการชำระเงิน
+  const handlePayment = async (values: any) => {
+    const id = "1459901028579"; // ตัวอย่าง ID
     if (amount > 0) {
       const payload = promptpay(id, { amount });
       const qrCodeDataUrl = await qrcode.toDataURL(payload);
-      return qrCodeDataUrl;
+      setQrCodeUrl(qrCodeDataUrl);
+      setIsModalVisible(true);
     }
-    return '';
   };
-
-  const getBase64 = (file: File): Promise<string> =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file); // อ่านไฟล์เป็น Base64
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = error => reject(error);
-    });
-  
 
   return (
     <div style={{ margin: '20px' }}>
       <Card>
         <Title level={4}>การชำระเงินสำหรับคอนเสิร์ต: {selectedConcert}</Title>
-
         <p><strong>ที่นั่งที่เลือก:</strong> {selectedSeats.join(', ')}</p>
         <p><strong>ประเภทบัตร:</strong> {selectedTicketType}</p>
         <p><strong>จำนวนบัตร:</strong> {ticketQuantity}</p>
         <p><strong>ราคาต่อบัตร:</strong> {ticketPrice} บาท</p>
-        <p><strong>ยอดรวม:</strong> {calculateAmount()} บาท</p>
+        <p><strong>ยอดรวม:</strong> {amount} บาท</p>
 
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={handlePayment}
-          style={{ marginTop: '20px' }}
-        >
-          <Form.Item
-            label="ชื่อผู้ติดต่อ"
-            name="contactName"
-            rules={[{ required: true, message: 'กรุณากรอกชื่อผู้ติดต่อ' }]}
-          >
+        <Form form={form} layout="vertical" onFinish={handlePayment} style={{ marginTop: '20px' }}>
+          <Form.Item label="ชื่อผู้ติดต่อ" name="contactName" rules={[{ required: true, message: 'กรุณากรอกชื่อผู้ติดต่อ' }]}>
             <Input placeholder="ชื่อผู้ติดต่อ" />
           </Form.Item>
-          <Form.Item
-            label="อีเมลผู้ติดต่อ"
-            name="contactEmail"
-            rules={[{ required: true, message: 'กรุณากรอกอีเมลผู้ติดต่อ' }]}
-          >
+          <Form.Item label="อีเมลผู้ติดต่อ" name="contactEmail" rules={[{ required: true, message: 'กรุณากรอกอีเมลผู้ติดต่อ' }]}>
             <Input placeholder="อีเมลผู้ติดต่อ" />
           </Form.Item>
-          <Form.Item
-            label="วิธีการชำระเงิน"
-            name="paymentMethod"
-            rules={[{ required: true, message: 'กรุณาเลือกวิธีการชำระเงิน' }]}
-          >
+          <Form.Item label="วิธีการชำระเงิน" name="paymentMethod" rules={[{ required: true, message: 'กรุณาเลือกวิธีการชำระเงิน' }]}>
             <Select onChange={setPaymentMethod}>
               <Option value="PromptPay">PromptPay</Option>
               <Option value="CreditCard">บัตรเครดิต</Option>
@@ -268,9 +186,9 @@ const Payment: React.FC = () => {
         open={isModalVisible}
         title="QR Code สำหรับการชำระเงิน"
         onOk={handleUploadSlip}
-        onCancel={handleOk}
+        onCancel={() => setIsModalVisible(false)}
         footer={[
-          <Button key="back" onClick={handleOk}>
+          <Button key="back" onClick={() => setIsModalVisible(false)}>
             ยกเลิก
           </Button>,
           <Button key="submit" type="primary" onClick={handleUploadSlip} loading={loading}>
@@ -281,12 +199,28 @@ const Payment: React.FC = () => {
         {qrCodeUrl && <img src={qrCodeUrl} alt="QR Code" style={{ width: '100%' }} />}
         <p>กรุณาสแกน QR Code และอัปโหลดสลิปการโอนเงิน</p>
 
-        <Upload {...uploadProps} maxCount={1}>
-          <Button icon={<UploadOutlined />}>เลือกไฟล์สลิป (JPG/PNG)</Button>
+        <Upload
+          fileList={fileList}
+          onChange={onChange}
+          beforeUpload={beforeUpload}
+          maxCount={1}
+          multiple={false}
+          listType="picture-card"
+        >
+          <div>
+            <PlusOutlined />
+            <div style={{ marginTop: 8 }}>เลือกไฟล์สลิป (JPG/PNG)</div>
+          </div>
         </Upload>
+
       </Modal>
     </div>
   );
+};
+
+// ฟังก์ชันคำนวณจำนวนเงิน
+const calculateAmount = (ticketPrice: number, ticketQuantity: number): number => {
+  return ticketPrice * ticketQuantity;
 };
 
 export default Payment;
