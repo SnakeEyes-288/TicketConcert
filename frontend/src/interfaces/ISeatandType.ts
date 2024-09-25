@@ -1,8 +1,8 @@
 // interfaces/ISeatandType.ts
 export interface SeatandTypeInterface {
-    seat_number: string;
+    SeatNumber: string;
     isAvailable: boolean;
-    seatType?: {
+    SeatType?: {
       Name: string;
       Description: string;
     };

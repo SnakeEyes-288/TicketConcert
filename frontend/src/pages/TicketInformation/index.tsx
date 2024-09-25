@@ -1,24 +1,28 @@
-import React, { useState, useEffect } from 'react';   
-import { List, Spin, Alert } from 'antd';
+import React, { useState, useEffect } from 'react'; 
+import { List, Spin, Alert, Card, Typography, Button } from 'antd';
 import { useUser } from '../../components/UserContext'; // ดึงข้อมูลจาก UserContext
 import { GetTicket } from '../../services/https'; // นำเข้าฟังก์ชัน GetTicket
 import { PaymentInterface } from '../../interfaces/IPayment';
-import { SeatandTypeInterface } from '../../interfaces/ISeatandType'
+import { SeatandTypeInterface } from '../../interfaces/ISeatandType';
+import { useNavigate } from 'react-router-dom'; // นำเข้า useNavigate
 
 // ประกาศ Interface ของ Ticket
 interface TicketInterface {
-  Price: number;
-  PurchaseDate: string;
+  Price?: number;
+  PurchaseDate?: string;
   Seat?: SeatandTypeInterface; // เปลี่ยนเป็น SeatandTypeInterface
   Payment?: PaymentInterface; // ทำให้เป็น optional
 }
+
+const { Text } = Typography;
 
 const TicketHistory: React.FC = () => {
   const { memberID } = useUser(); // ดึง MemberID จาก UserContext
   const [ticketData, setTicketData] = useState<TicketInterface[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  
+  const navigate = useNavigate(); // สร้างตัวแปร navigate
+
   useEffect(() => {
     const fetchTicketData = async () => {
       if (memberID) {
@@ -29,7 +33,6 @@ const TicketHistory: React.FC = () => {
           } else {
             setError('ไม่พบข้อมูลตั๋ว');
           }
-
         } catch (error) {
           console.error('Error fetching ticket data:', error);
           setError('ไม่สามารถดึงข้อมูลตั๋วได้');
@@ -38,10 +41,9 @@ const TicketHistory: React.FC = () => {
         }
       }
     };
-  
+
     fetchTicketData();
   }, [memberID]);
-  
 
   if (loading) {
     return (
@@ -55,35 +57,51 @@ const TicketHistory: React.FC = () => {
     return <Alert message={error} type="error" style={{ textAlign: 'center', marginTop: '100px' }} />;
   }
 
+  // ฟังก์ชันสำหรับนำทางไปที่ RefundRequest พร้อมข้อมูลตั๋ว
+  const handleRefundRequest = (ticket: TicketInterface) => {
+    navigate("/refund-request", { state: { ticket } }); // ส่งข้อมูลตั๋วไปใน state
+  };
+
   return (
-    <div>
+    <div style={{ padding: '20px' }}>
       <List
+        itemLayout="vertical"
+        size="large"
         dataSource={Array.isArray(ticketData) ? ticketData : []} // ตรวจสอบให้แน่ใจว่าเป็น array
         renderItem={(item: TicketInterface) => (
           <List.Item>
-            <div>หมายเลขที่นั่ง: {item.Seat?.seat_number || 'ไม่ระบุ'}</div>
-            <div>ราคาตั๋ว: {item.Price} บาท</div>
-            <div>วันที่ซื้อ: {item.PurchaseDate ? new Date(item.PurchaseDate).toLocaleString() : 'ไม่ระบุ'}</div>
-            <div>สถานะการชำระเงิน: {item.Payment?.Status || 'ไม่ระบุ'}</div>
-            <div>วิธีการชำระเงิน: {item.Payment?.PaymentMethod || 'ไม่ระบุ'}</div>
-            <div>จำนวนตั๋ว: {item.Payment?.Quantity || 0} ใบ</div>
-            <div>ยอดเงินรวม: {item.Payment?.Amount || 0} บาท</div>
-            <div>
-              ประเภทที่นั่ง: 
-              {item.Seat?.seatType ? (
+            <Card style={{ marginBottom: '16px' }}>
+              <Text strong>หมายเลขที่นั่ง:</Text> {item.Seat?.SeatNumber || 'ไม่ระบุ'}<br />
+              <Text strong>ราคาตั๋ว:</Text> {item.Price} บาท<br />
+              <Text strong>วันที่ซื้อ:</Text> {item.PurchaseDate ? new Date(item.PurchaseDate).toLocaleString() : 'ไม่ระบุ'}<br />
+              <Text strong>สถานะการชำระเงิน:</Text> {item.Payment?.Status || 'ไม่ระบุ'}<br />
+              <Text strong>วิธีการชำระเงิน:</Text> {item.Payment?.PaymentMethod || 'ไม่ระบุ'}<br />
+              <Text strong>ยอดเงินรวม:</Text> {item.Payment?.Amount || 0} บาท<br />
+              <Text strong>ประเภทที่นั่ง:</Text> 
+              {item.Seat?.SeatType ? (
                 <>
-                  {item.Seat.seatType.Name || 'ไม่ระบุ'} - {item.Seat.seatType.Description || 'ไม่ระบุ'}
+                  {item.Seat.SeatType.Name || 'ไม่ระบุ'}
                 </>
               ) : (
                 'ไม่ระบุ'
-              )}
-            </div>
-            {item.Payment?.SlipImage && <img src={item.Payment.SlipImage} alt="Slip" style={{ width: '100px' }} />}
+              )}<br />
+              <Text strong>รายละเอียด:</Text>
+              {item.Seat?.SeatType ? (
+                <>
+                  {item.Seat.SeatType.Description || 'ไม่ระบุ'}
+                </>
+              ) : (
+                'ไม่ระบุ'
+              )}<br />
+              <Button type="primary" onClick={() => handleRefundRequest(item)} style={{ marginTop: '16px' }}>
+                ขอคืนเงิน
+              </Button>
+            </Card>
           </List.Item>
         )}
       />
     </div>
-  );  
+  );
 };
 
 export default TicketHistory; // ส่งออก Component ที่แก้ไขแล้ว

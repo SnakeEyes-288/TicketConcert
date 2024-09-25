@@ -123,16 +123,17 @@ func DeleteTicket(c *gin.Context) {
 func ListTicketsByMemberID(c *gin.Context) {
     var tickets []entity.Ticket
     memberID := c.Param("memberID")
-    log.Printf("Fetching tickets for memberID: %s", memberID) // เพิ่ม log นี้
+    //log.Printf("Fetching tickets for memberID: %s", memberID) // เพิ่ม log นี้
 
     db := config.DB()
 
     // ดึงข้อมูลตั๋วที่มี MemberID ตรงกับที่ส่งเข้ามา
-    if err := db.Preload("Seat").Preload("Payment").Where("member_id = ?", memberID).Find(&tickets).Error; err != nil {
-        log.Printf("Database error: %v", err) // log ข้อผิดพลาด
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to retrieve tickets"})
-        return
-    }
+	if err := db.Preload("Seat.SeatType").Preload("Payment").Where("member_id = ?", memberID).Find(&tickets).Error; err != nil {
+    	log.Printf("Database error: %v", err) // log ข้อผิดพลาด
+    	c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to retrieve tickets"})
+    	return
+	}
+
 
     // ตรวจสอบว่ามีข้อมูลหรือไม่
     if len(tickets) == 0 {

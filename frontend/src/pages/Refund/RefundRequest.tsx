@@ -1,14 +1,17 @@
 import React from "react";
 import { Form, Input, Button, message, Modal } from "antd";
-import { useNavigate } from "react-router-dom";
-//import "./Profile";  // ตัวอย่างการใช้ case ที่ถูกต้อง // นำเข้าคอมโพเนนต์ Profile
+import { useNavigate, useLocation } from "react-router-dom";
 import "./RefundRequest.css";
 import Profile from "./Profile/Profile";
 
 const RefundRequest: React.FC = () => {
   const [form] = Form.useForm();
   const navigate = useNavigate();
+  const location = useLocation();
   const [messageApi, contextHolder] = message.useMessage();
+
+  // รับข้อมูลตั๋วจาก state
+  const ticket = location.state?.ticket;
 
   // Example of logged-in user data for validation
   const loggedInUser = {
@@ -18,7 +21,6 @@ const RefundRequest: React.FC = () => {
   };
 
   // Simulate sending data to a server
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const submitRefundRequest = async (values: any) => {
     try {
       const response = await fetch("/api/refund-request", {
@@ -26,26 +28,28 @@ const RefundRequest: React.FC = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(values),
+        body: JSON.stringify({ ...values, ticket }), // ส่งข้อมูลตั๋วไปด้วย
       });
-
+  
       // Check response status
-      if (response.status === 200) {
+      if (response.ok) {
         Modal.success({
           title: "สำเร็จ",
           content: "ส่งคำขอสำเร็จ",
         });
+        navigate("/"); // กลับไปหน้าหลักหลังส่งคำขอสำเร็จ
       } else {
         throw new Error("Request failed");
       }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
-      messageApi.error("เกิดข้อผิดพลาดในการส่งคำขอ");
+      // ตรวจสอบว่า error เป็น instance ของ Error หรือไม่
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      messageApi.error("เกิดข้อผิดพลาดในการส่งคำขอ: " + errorMessage);
     }
   };
+  
 
   // Handler for form submission
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleSubmit = (values: any) => {
     if (
       values.username !== loggedInUser.username ||
@@ -59,7 +63,7 @@ const RefundRequest: React.FC = () => {
   };
 
   const handleBack = () => {
-    navigate("/"); // Navigate to the homepage
+    navigate("/concerts"); // Navigate to the homepage
   };
 
   return (
