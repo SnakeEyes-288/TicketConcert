@@ -14,24 +14,26 @@ const Register: React.FC = () => {
 
     const handleSubmit = async (values: any) => {
         const memberData: MemberInterface = {
-            username: values.username.trim(),
-            password: values.password,
-            email: values.email.trim(),
-            first_name: values.firstName.trim(),
-            last_name: values.lastName.trim(),
-            birthDay: values.birthday ? values.birthday.format('YYYY-MM-DD') : '',
+          username: values.username.trim(),
+          password: values.password,
+          email: values.email.trim(),
+          first_name: values.firstName.trim(),
+          last_name: values.lastName.trim(),
+          birthDay: values.birthday ? values.birthday.format('YYYY-MM-DD') : '',
         };
-
+      
         setLoading(true);
         const res = await CreateMember(memberData);
         setLoading(false);
-
-        if (res) {
-            navigate("/login");
+      
+        // ตรวจสอบผลลัพธ์ของการลงทะเบียน
+        if (res && res.message !== "Registration successful!") {
+          setError(res.message || "Registration failed. Please try again.");
         } else {
-            setError(res.message || "Registration failed. Please try again.");
+          navigate("/login");
         }
-    };
+      };
+      
 
     return (
         <div style={{ maxWidth: '400px', margin: 'auto', padding: '20px' }}>

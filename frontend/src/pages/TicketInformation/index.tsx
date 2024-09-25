@@ -1,28 +1,35 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';   
 import { List, Spin, Alert } from 'antd';
 import { useUser } from '../../components/UserContext'; // ดึงข้อมูลจาก UserContext
-import { TicketInterface } from '../../interfaces/ITicket'; // นำเข้า Interface ของ Ticket
 import { GetTicket } from '../../services/https'; // นำเข้าฟังก์ชัน GetTicket
 import { PaymentInterface } from '../../interfaces/IPayment';
-import { SeatInterface } from '../../interfaces/ISeat';
-import { SeatTypeInterface } from '../../interfaces/ISeatType';
+import { SeatandTypeInterface } from '../../interfaces/ISeatandType'
+
+// ประกาศ Interface ของ Ticket
+interface TicketInterface {
+  Price: number;
+  PurchaseDate: string;
+  Seat?: SeatandTypeInterface; // เปลี่ยนเป็น SeatandTypeInterface
+  Payment?: PaymentInterface; // ทำให้เป็น optional
+}
 
 const TicketHistory: React.FC = () => {
   const { memberID } = useUser(); // ดึง MemberID จาก UserContext
   const [ticketData, setTicketData] = useState<TicketInterface[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-
+  
   useEffect(() => {
     const fetchTicketData = async () => {
       if (memberID) {
         try {
-          const data = await GetTicket(); // ดึงข้อมูลตั๋ว
-          if (data) {
-            setTicketData(data);
+          const data = await GetTicket(parseInt(memberID)); // แปลง memberID จาก string เป็น number
+          if (data && data.data) {
+            setTicketData(data.data); // ตั้งค่าจาก data.data
           } else {
             setError('ไม่พบข้อมูลตั๋ว');
           }
+
         } catch (error) {
           console.error('Error fetching ticket data:', error);
           setError('ไม่สามารถดึงข้อมูลตั๋วได้');
@@ -31,9 +38,10 @@ const TicketHistory: React.FC = () => {
         }
       }
     };
-
+  
     fetchTicketData();
   }, [memberID]);
+  
 
   if (loading) {
     return (
@@ -50,21 +58,21 @@ const TicketHistory: React.FC = () => {
   return (
     <div>
       <List
-        dataSource={ticketData}
+        dataSource={Array.isArray(ticketData) ? ticketData : []} // ตรวจสอบให้แน่ใจว่าเป็น array
         renderItem={(item: TicketInterface) => (
           <List.Item>
             <div>หมายเลขที่นั่ง: {item.Seat?.seat_number || 'ไม่ระบุ'}</div>
             <div>ราคาตั๋ว: {item.Price} บาท</div>
-            <div>วันที่ซื้อ: {new Date(item.PurchaseDate).toLocaleString()}</div>
-            <div>สถานะการชำระเงิน: {item.PaymentID?.Status || 'ไม่ระบุ'}</div>
+            <div>วันที่ซื้อ: {item.PurchaseDate ? new Date(item.PurchaseDate).toLocaleString() : 'ไม่ระบุ'}</div>
+            <div>สถานะการชำระเงิน: {item.Payment?.Status || 'ไม่ระบุ'}</div>
             <div>วิธีการชำระเงิน: {item.Payment?.PaymentMethod || 'ไม่ระบุ'}</div>
             <div>จำนวนตั๋ว: {item.Payment?.Quantity || 0} ใบ</div>
-            <div>ยอดเงินรวม: {item.PaymentID?.Amount} บาท</div>
+            <div>ยอดเงินรวม: {item.Payment?.Amount || 0} บาท</div>
             <div>
               ประเภทที่นั่ง: 
               {item.Seat?.seatType ? (
                 <>
-                  {item.Seat.seatType?.Name || 'ไม่ระบุ'} - {item.Seat.seatType?.Description || 'ไม่ระบุ'}
+                  {item.Seat.seatType.Name || 'ไม่ระบุ'} - {item.Seat.seatType.Description || 'ไม่ระบุ'}
                 </>
               ) : (
                 'ไม่ระบุ'
@@ -75,7 +83,7 @@ const TicketHistory: React.FC = () => {
         )}
       />
     </div>
-  );
+  );  
 };
 
-export default TicketHistory; // เปลี่ยนชื่อ component ที่ส่งออก
+export default TicketHistory; // ส่งออก Component ที่แก้ไขแล้ว

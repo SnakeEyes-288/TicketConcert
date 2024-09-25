@@ -44,7 +44,10 @@ func main() {
 		router.POST("/payment", controller.CreatePayment)
 		router.POST("/ticket", controller.CreateTicket)
 		router.GET("/payment/:id", controller.GetPaymentsByMemberID) // เส้นทางสำหรับดึงข้อมูลการชำระเงินของสมาชิก
-		r.GET("/concerts/detail", controller.GetConcerts)
+		router.GET("/tickets/member/:memberID", controller.ListTicketsByMemberID)
+		// เปลี่ยนการเรียกใช้งาน SendEmail ให้ถูกต้อง
+		router.POST("/sendTicketEmail", controller.SendEmail)
+
 	}
 
 	r.GET("/", func(c *gin.Context) {

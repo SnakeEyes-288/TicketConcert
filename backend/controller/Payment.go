@@ -12,6 +12,9 @@ import (
 
 	"github.com/SnakeEyes-288/sa-67-example/config"
 	"github.com/SnakeEyes-288/sa-67-example/entity"
+
+	"github.com/sendgrid/sendgrid-go"
+	"github.com/sendgrid/sendgrid-go/helpers/mail"
 )
 
 type CreatePaymentRequest struct {
@@ -28,63 +31,68 @@ func CreatePayment(c *gin.Context) {
 		return
 	}
 
-	// ตรวจสอบว่าได้ส่ง SlipImage มาใน request หรือไม่
-	if request.Payment.SlipImage == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "SlipImage is required"})
-		return
-	}
+	// ตรวจสอบว่ามีการอัปโหลด SlipImage หรือไม่
+	if request.Payment.SlipImage != "" {
+		// ทำการลบ prefix "data:image/jpeg;base64," และ "data:image/png;base64," ถ้ามี
+		if strings.HasPrefix(request.Payment.SlipImage, "data:image/jpeg;base64,") {
+			request.Payment.SlipImage = strings.TrimPrefix(request.Payment.SlipImage, "data:image/jpeg;base64,")
+		} else if strings.HasPrefix(request.Payment.SlipImage, "data:image/png;base64,") {
+			request.Payment.SlipImage = strings.TrimPrefix(request.Payment.SlipImage, "data:image/png;base64,")
+		} else {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Unsupported image format"})
+			return
+		}
 
-	// ทำการลบ prefix "data:image/jpeg;base64," และ "data:image/png;base64," ถ้ามี
-	if strings.HasPrefix(request.Payment.SlipImage, "data:image/jpeg;base64,") {
-		request.Payment.SlipImage = strings.TrimPrefix(request.Payment.SlipImage, "data:image/jpeg;base64,")
-	} else if strings.HasPrefix(request.Payment.SlipImage, "data:image/png;base64,") {
-		request.Payment.SlipImage = strings.TrimPrefix(request.Payment.SlipImage, "data:image/png;base64,")
+		// แปลง Base64 เป็นไฟล์
+		decodedImage, err := base64.StdEncoding.DecodeString(request.Payment.SlipImage)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid SlipImage data", "details": err.Error()})
+			return
+		}
+
+		// ตรวจสอบว่า decodedImage มีข้อมูลหรือไม่
+		if len(decodedImage) == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Decoded SlipImage is empty"})
+			return
+		}
+
+		// ตรวจสอบและสร้างโฟลเดอร์ uploads ถ้ายังไม่มี
+		if _, err := os.Stat("uploads"); os.IsNotExist(err) {
+			os.Mkdir("uploads", 0755) // สร้างโฟลเดอร์ uploads ถ้ายังไม่มี
+		}
+
+		// บันทึกไฟล์สลิปไปยังโฟลเดอร์ "uploads"
+		filePath := filepath.Join("uploads", "slip.png") // สามารถปรับเปลี่ยนชื่อตามที่ต้องการ
+		if err := os.WriteFile(filePath, decodedImage, 0644); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to save slip"})
+			return
+		}
+
+		// อัปเดตสถานะการชำระเงินเป็น 'Paid'
+		request.Payment.Status = "Paid"
+		request.Payment.SlipImage = filePath
 	} else {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Unsupported image format"})
-		return
+		// หากไม่มีการอัปโหลดสลิป ให้สถานะยังคงเป็น 'Pending'
+		request.Payment.Status = "Pending"
 	}
 
-	// แปลง Base64 เป็นไฟล์
-	decodedImage, err := base64.StdEncoding.DecodeString(request.Payment.SlipImage)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid SlipImage data", "details": err.Error()})
-		return
-	}
-
-	// ตรวจสอบว่า decodedImage มีข้อมูลหรือไม่
-	if len(decodedImage) == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Decoded SlipImage is empty"})
-		return
-	}
-
-	// บันทึกไฟล์สลิปไปยังโฟลเดอร์ "uploads"
-	filePath := filepath.Join("uploads", "slip.png") // ตั้งชื่อไฟล์เป็น slip.png หรือปรับตามต้องการ
-	if err := os.WriteFile(filePath, decodedImage, 0644); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to save slip"})
-		return
-	}
-
-	// ตั้งค่า SlipImage ให้กับ Payment
-	payment := request.Payment
-	payment.SlipImage = filePath // ใช้ SlipImage แทน SlipURL
-
-	// ตรวจสอบว่าฟิลด์ต่างๆ ของ Payment ถูกต้องหรือไม่
-	if payment.PaymentMethod == "" || payment.Amount <= 0 {
+	// ตรวจสอบฟิลด์ต่างๆ ของ Payment
+	if request.Payment.PaymentMethod == "" || request.Payment.Amount <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "PaymentMethod or Amount is missing or invalid"})
 		return
 	}
 
 	// เริ่มต้นการทำธุรกรรม
 	db := config.DB()
-	err = db.Transaction(func(tx *gorm.DB) error {
+	err := db.Transaction(func(tx *gorm.DB) error {
 		// บันทึกข้อมูล Payment ลงในฐานข้อมูล
-		if err := tx.Create(&payment).Error; err != nil {
+		if err := tx.Create(&request.Payment).Error; err != nil {
 			return err
 		}
 
 		// บันทึกข้อมูล Tickets โดยเชื่อมโยงกับ Payment ID
 		for _, ticket := range request.Tickets {
-			ticket.PaymentID = &payment.ID
+			ticket.PaymentID = &request.Payment.ID
 			if err := tx.Create(&ticket).Error; err != nil {
 				return err
 			}
@@ -99,8 +107,8 @@ func CreatePayment(c *gin.Context) {
 		return
 	}
 
-	// ส่งข้อมูลการชำระเงินกลับไปในกรณีที่ทำงานสำเร็จ
-	c.JSON(http.StatusCreated, gin.H{"data": payment})
+	// ส่งข้อมูลการชำระเงินกลับในกรณีที่ทำงานสำเร็จ
+	c.JSON(http.StatusCreated, gin.H{"data": request.Payment})
 }
 
 // GetPaymentsByMemberID ดึงข้อมูลการชำระเงินตาม MemberID
@@ -111,11 +119,54 @@ func GetPaymentsByMemberID(c *gin.Context) {
 	db := config.DB()
 
 	// ค้นหาการชำระเงินทั้งหมดที่เชื่อมโยงกับ MemberID
-	if err := db.Preload("Tickets").Where("id = ?", memberID).Find(&payments).Error; err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "ไม่พบข้อมูลการชำระเงิน"})
+	if err := db.Preload("Tickets").Where("member_id = ?", memberID).Find(&payments).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ไม่พบข้อมูลการชำระเงินสำหรับ MemberID: " + memberID})
 		return
 	}
 
 	// ส่งข้อมูลการชำระเงินกลับในรูปแบบ JSON
 	c.JSON(http.StatusOK, gin.H{"data": payments})
+}
+
+// ฟังก์ชันสำหรับการส่งอีเมล
+func SendEmail(c *gin.Context) {
+    var data struct {
+        To      string `json:"to"`
+        Subject string `json:"subject"`
+        Body    string `json:"body"`
+    }
+
+    if err := c.ShouldBindJSON(&data); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
+
+    from := mail.NewEmail("Wichitchai", "wichitchai63@gmail.com")
+    to := mail.NewEmail("", data.To)
+
+    // กำหนดเนื้อหาอีเมล
+    message := mail.NewSingleEmail(from, data.Subject, to, data.Body, data.Body)
+
+    // ดึงคีย์ API จาก environment variables
+    apiKey := os.Getenv("HE5KBK9MRG7JZYEP612VKXBX") // ใช้ environment variable "SENDGRID_API_KEY"
+    if apiKey == "" {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "SendGrid API key not found"})
+        return
+    }
+
+    // สร้าง client สำหรับ SendGrid
+    client := sendgrid.NewSendClient(apiKey)
+    response, err := client.Send(message)
+
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+
+    // ตรวจสอบสถานะของ response
+    if response.StatusCode >= 200 && response.StatusCode < 300 {
+        c.JSON(http.StatusOK, gin.H{"status": "Email sent successfully"})
+    } else {
+        c.JSON(response.StatusCode, gin.H{"error": response.Body})
+    }
 }

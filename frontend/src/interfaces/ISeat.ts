@@ -4,4 +4,5 @@ export interface SeatInterface {
     concert_id?: number;
     is_available?: boolean;
     seat_type_id?: number;
+    
 }

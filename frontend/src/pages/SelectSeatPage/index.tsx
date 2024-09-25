@@ -111,16 +111,19 @@ const SeatSelection: React.FC = () => {
     
         const ticketPrice = selectedSeatDetails?.SeatTypePrice || 0;
         const selectedSeatTypeName = selectedSeatDetails?.SeatTypeName || 'ไม่ทราบ';
+
+        console.log('Selected Seat Type:', selectedSeatTypeName);
     
         navigate('/payment', {
             state: {
-                selectedSeats,
-                selectedConcert: selectedConcert?.name,
-                selectedSeatType: selectedSeatTypeName,
-                ticketQuantity,
-                ticketPrice,
+              selectedSeats,
+              selectedConcert: selectedConcert?.name,
+              selectedSeatType: selectedSeatTypeName,
+              ticketQuantity,
+              ticketPrice,
             },
-        });
+         });
+         
     };
 
     return (

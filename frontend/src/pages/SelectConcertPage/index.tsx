@@ -37,8 +37,10 @@ const ConcertSelection: React.FC = () => {
 
   // Navigate to payment history
   const handleViewPaymentHistory = () => {
-    navigate('/payment-history');
+    navigate('/TicketInformation');
   };
+
+  
 
   // การโหลดข้อมูล
   if (loading) {
