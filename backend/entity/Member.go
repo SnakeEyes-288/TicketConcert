@@ -13,6 +13,7 @@ type Member struct {
     FirstName  string
     LastName   string
     Birthday   time.Time
+    PhoneNumber string
 
     Tickets []Ticket
     Smss []Sms

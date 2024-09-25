@@ -34,6 +34,7 @@ func CreateMember(c *gin.Context) {
         FirstName: user.FirstName,
         LastName:  user.LastName,
         Birthday:  user.Birthday,
+		PhoneNumber: user.PhoneNumber,
     }
 
     if err := db.Create(&u).Error; err != nil {

@@ -1,0 +1,82 @@
+/* index.css */
+
+/* ตั้งค่าพื้นหลังแบบเต็มหน้าจอสำหรับหน้าเลือกคอนเสิร์ต */
+.concert-selection-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  min-height: 100vh;
+  background: linear-gradient(45deg, #ff0000, #000000);
+}
+
+/* ตั้งค่าสำหรับหัวข้อ */
+.concert-title {
+  text-align: center;
+  margin-bottom: 40px;
+  color: white;
+}
+
+/* การตั้งค่าสำหรับปุ่มประวัติการชำระเงิน */
+.payment-history-btn {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* ปุ่มขนาดใหญ่สำหรับเลือกคอนเสิร์ต */
+.right-button {
+  padding: 12px 24px;
+  font-size: 1rem;
+  border-radius: 30px;
+  border: none;
+  cursor: pointer;
+  color: white;
+  background: linear-gradient(90deg, #ff7e5f, #feb47b);
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.right-button:hover {
+  background: linear-gradient(90deg, #feb47b, #ff7e5f);
+  transform: scale(1.05);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* การ์ดคอนเสิร์ต */
+.concert-card {
+  background: #ffffff;
+  border-radius: 10px;
+  height: 100%;
+}
+
+/* รูปภาพในการ์ดคอนเสิร์ต */
+.concert-image {
+  border-radius: 10px 10px 0 0;
+  height: 200px;
+  object-fit: cover;
+}
+
+/* Loading spinner */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: rgba(255, 255, 255, 0.8);
+}
+
+/* User info section */
+.user-info {
+  text-align: right;
+  margin-bottom: 20px;
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+/* Concert list grid */
+.concert-list {
+  width: 70%;
+}

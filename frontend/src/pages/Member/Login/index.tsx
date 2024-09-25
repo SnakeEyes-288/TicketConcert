@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Form, Input, Button, Typography, Row, Col, Card, Alert } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useUser } from '../../../components/UserContext'; // ดึงข้อมูลจาก UserContext
+import '../../Member/Login/index.css'; // นำเข้าไฟล์ index.css
 
 const { Title, Text } = Typography;
 

@@ -1,19 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Card, Row, Col, Spin, Alert, Typography } from 'antd';
+import { Button, Card, Row, Col, Spin, Alert, Typography, Avatar } from 'antd';
 import { useNavigate } from 'react-router-dom';
-import moment from 'moment'; // ใช้ moment.js ในการแปลงวันที่
+import moment from 'moment';
 import { ConcertInterface } from '../../interfaces/IConcert';
-import { GetConcert } from '../../services/https'; // นำเข้าฟังก์ชัน GetConcert
+import { GetConcert } from '../../services/https';
+import { useUser } from '../../components/UserContext';
+import '../SelectConcertPage/index.css'; // นำเข้าไฟล์ index.css
 
 const { Title, Text } = Typography;
 
 const ConcertSelection: React.FC = () => {
+  const { username, imageUrl } = useUser();
   const [concerts, setConcerts] = useState<ConcertInterface[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  // ดึงข้อมูลคอนเสิร์ตจาก Backend
   useEffect(() => {
     const fetchConcerts = async () => {
       try {
@@ -26,46 +28,46 @@ const ConcertSelection: React.FC = () => {
         setLoading(false);
       }
     };
-
     fetchConcerts();
   }, []);
 
-  // ฟังก์ชันเพื่อจัดการเมื่อมีการเลือกคอนเสิร์ต
   const handleSelectConcert = (concert: ConcertInterface) => {
     navigate('/select-seats', { state: { selectedConcert: concert } });
   };
 
-  // Navigate to payment history
   const handleViewPaymentHistory = () => {
     navigate('/TicketInformation');
   };
 
-  
-
-  // การโหลดข้อมูล
   if (loading) {
     return (
-      <div style={{ textAlign: 'center', marginTop: '100px' }}>
+      <div className="loading-container">
         <Spin size="large" />
       </div>
     );
   }
 
   return (
-    <div style={{ margin: '20px', padding: '20px', background: '#f0f2f5', minHeight: '100vh' }}>
-      <Title level={2} style={{ textAlign: 'center', marginBottom: '40px', color: '#1890ff' }}>
+    <div className="concert-selection-container">
+      {/* User Information */}
+      <div className="user-info">
+        <Avatar src={imageUrl} size="large" style={{ marginRight: '8px' }} />
+        <Text>{username}</Text>
+      </div>
+
+      <Title level={2} className="concert-title">
         เลือกคอนเสิร์ตที่คุณสนใจ
       </Title>
 
-      <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-        <Button type="primary" onClick={handleViewPaymentHistory}>
+      <div className="payment-history-btn">
+        <Button className="right-button" onClick={handleViewPaymentHistory}>
           ดูประวัติการชำระเงิน
         </Button>
       </div>
 
       {error && <Alert message={error} type="error" style={{ marginBottom: '20px' }} />}
 
-      <Row gutter={[16, 16]}>
+      <Row gutter={[16, 16]} className="concert-list">
         {concerts.length === 0 ? (
           <Col span={24}>
             <Card>
@@ -74,15 +76,15 @@ const ConcertSelection: React.FC = () => {
           </Col>
         ) : (
           concerts.map((concert) => (
-            <Col span={8} key={concert.ID}>
+            <Col xs={24} sm={12} md={8} lg={6} key={concert.ID}>
               <Card
                 hoverable
-                style={{ background: '#ffffff', borderRadius: '10px' }}
+                className="concert-card"
                 cover={
                   <img
                     alt="concert"
                     src={`https://via.placeholder.com/400x200.png?text=${concert.name}`}
-                    style={{ borderRadius: '10px 10px 0 0', height: '200px', objectFit: 'cover' }}
+                    className="concert-image"
                   />
                 }
               >
@@ -98,11 +100,7 @@ const ConcertSelection: React.FC = () => {
                   block
                   size="large"
                   onClick={() => handleSelectConcert(concert)}
-                  style={{
-                    backgroundColor: '#52c41a',
-                    borderColor: '#52c41a',
-                    fontWeight: 'bold',
-                  }}
+                  className="right-button"
                 >
                   เลือกคอนเสิร์ตนี้
                 </Button>

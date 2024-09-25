@@ -6,4 +6,5 @@ export interface MemberInterface {
     first_name?: string;
     last_name?: string;
     birthDay?: string;
+    phone_number?:string;
 }

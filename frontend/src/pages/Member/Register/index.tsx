@@ -20,6 +20,7 @@ const Register: React.FC = () => {
           first_name: values.firstName.trim(),
           last_name: values.lastName.trim(),
           birthDay: values.birthday ? values.birthday.format('YYYY-MM-DD') : '',
+          phone_number: values.phonenumber.trim(),
         };
       
         setLoading(true);
@@ -57,6 +58,9 @@ const Register: React.FC = () => {
                 </Form.Item>
                 <Form.Item label="Birthday" name="birthday" rules={[{ required: true }]}>
                     <DatePicker format="YYYY-MM-DD" />
+                </Form.Item>
+                <Form.Item label="PhoneNumber" name="phonenumber" rules={[{ required: true }]}>
+                    <Input />
                 </Form.Item>
                 <Form.Item>
                     <Button type="primary" htmlType="submit" block loading={loading}>

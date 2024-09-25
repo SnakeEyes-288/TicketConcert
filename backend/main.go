@@ -47,6 +47,8 @@ func main() {
 		router.GET("/tickets/member/:memberID", controller.ListTicketsByMemberID)
 		// เปลี่ยนการเรียกใช้งาน SendEmail ให้ถูกต้อง
 		router.POST("/sendTicketEmail", controller.SendEmail)
+		router.GET("/Condition",controller.ListCondition)
+		router.POST("/CreateCondition",controller.CreateConditionRefun)
 
 	}
 

@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -15,6 +16,8 @@ import (
 
 	"github.com/sendgrid/sendgrid-go"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
+	"github.com/google/uuid"
+
 )
 
 type CreatePaymentRequest struct {
@@ -61,8 +64,11 @@ func CreatePayment(c *gin.Context) {
 			os.Mkdir("uploads", 0755) // สร้างโฟลเดอร์ uploads ถ้ายังไม่มี
 		}
 
+		// สร้างชื่อไฟล์ใหม่โดยใช้ UUID และเวลาปัจจุบัน
+		newFileName := uuid.New().String() + "_" + time.Now().Format("20060102150405") + ".png"
+		filePath := filepath.Join("uploads", newFileName)
+
 		// บันทึกไฟล์สลิปไปยังโฟลเดอร์ "uploads"
-		filePath := filepath.Join("uploads", "slip.png") // สามารถปรับเปลี่ยนชื่อตามที่ต้องการ
 		if err := os.WriteFile(filePath, decodedImage, 0644); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to save slip"})
 			return

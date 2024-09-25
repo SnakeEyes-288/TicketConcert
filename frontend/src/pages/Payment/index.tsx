@@ -1,14 +1,13 @@
-import React, { useState } from 'react'; 
-import { Button, Modal, Typography, Form, Input, Select, Card, notification, Upload } from 'antd';
+import React, { useState, useEffect } from 'react';  
+import { Button, Modal, Typography, Form, Input, Select, Card, notification, Upload, Checkbox } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { PlusOutlined } from '@ant-design/icons';
-import { CreatePayment, CreateTicket, SendTicketEmail } from '../../services/https'; // Import SendTicketEmail
-import { PaymentInterface } from '../../interfaces/IPayment';
-import { TicketInterface } from '../../interfaces/ITicket';
+import { CreatePayment, CreateTicket, CreateConditionRefun, GetCondition } from '../../services/https';
 import { useUser } from '../../components/UserContext';
 import promptpay from 'promptpay-qr';
 import * as qrcode from 'qrcode';
 import { UploadFile } from 'antd';
+import { TicketInterface } from '../../interfaces/ITicket';
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -17,16 +16,31 @@ const Payment: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { selectedConcert = '', selectedSeats = [], selectedSeatType = '', ticketQuantity = 1, ticketPrice = 0, seatTypeID = 0 } = location.state || {};
-  const { memberID } = useUser(); // ใช้ MemberID จาก context
+  const { memberID } = useUser();
   const [form] = Form.useForm();
   const [paymentMethod, setPaymentMethod] = useState('เลือกวิธีการชำระเงิน');
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   const [fileList, setFileList] = useState<UploadFile[]>([]);
+  const [conditionText, setConditionText] = useState(''); // เก็บข้อความเงื่อนไข
+  const [isConditionAccepted, setIsConditionAccepted] = useState(false); // เก็บสถานะการยอมรับเงื่อนไข
+  const [isConditionModalVisible, setIsConditionModalVisible] = useState(false); // สถานะการแสดง Modal เงื่อนไข
 
   const amount = calculateAmount(ticketPrice, ticketQuantity);
-  
+  //const conditionText = ''
+
+  useEffect(() => {
+    const fetchCondition = async () => {
+      const res = await GetCondition(); // ดึงข้อความเงื่อนไขจาก API
+      if (res) {
+        setConditionText(res.description); // บันทึกข้อความเงื่อนไขที่ได้รับ
+      }
+    };
+
+    fetchCondition();
+  }, []);
+
   const onChange = ({ fileList: newFileList }: { fileList: UploadFile[] }) => {
     setFileList(newFileList);
   };
@@ -42,7 +56,7 @@ const Payment: React.FC = () => {
 
   const handleUploadSlip = async () => {
     setLoading(true);
-  
+
     if (!fileList || fileList.length === 0) {
       notification.error({
         message: 'เกิดข้อผิดพลาด',
@@ -51,9 +65,9 @@ const Payment: React.FC = () => {
       setLoading(false);
       return;
     }
-  
+
     const file = fileList[0]?.originFileObj;
-  
+
     if (!(file instanceof Blob)) {
       notification.error({
         message: 'เกิดข้อผิดพลาด',
@@ -62,11 +76,11 @@ const Payment: React.FC = () => {
       setLoading(false);
       return;
     }
-  
+
     let slipImage = '';
-  
+
     try {
-      slipImage = await getBase64(file); // แปลงไฟล์เป็น Base64
+      slipImage = await getBase64(file);
     } catch (error) {
       notification.error({
         message: 'เกิดข้อผิดพลาด',
@@ -75,61 +89,48 @@ const Payment: React.FC = () => {
       setLoading(false);
       return;
     }
-  
-    const paymentData: PaymentInterface = {
-      PaymentMethod: paymentMethod,
-      PaymentDate: new Date().toISOString(),
-      Status: 'Paid',  // อัปเดตสถานะเป็น 'Paid' ถ้ามีการอัปโหลดสลิป
-      Quantity: selectedSeats.length,
-      Amount: amount,
-      SlipImage: slipImage,
+
+    // ข้อมูลสำหรับการสร้าง ConditionRefun
+    const conditionRefunData = {
+      AcceptedTerms: isConditionAccepted, // สถานะการยอมรับเงื่อนไข
+      Description: conditionText, // ข้อความเงื่อนไขที่ผู้ใช้เห็น
     };
-  
+
     try {
+      // ส่งข้อมูลไปสร้าง ConditionRefun
+      const conditionRes = await CreateConditionRefun(conditionRefunData);
+      const conditionRefunID = conditionRes?.data?.ID; // เก็บ ID ของ ConditionRefun ที่สร้าง
+
+      const paymentData = {
+        PaymentMethod: paymentMethod,
+        PaymentDate: new Date().toISOString(),
+        Status: 'Paid',
+        Quantity: selectedSeats.length,
+        Amount: amount,
+        SlipImage: slipImage,
+        ConditionRefunID: conditionRefunID, // เชื่อมโยงกับ ConditionRefun
+      };
+
       const paymentRes = await CreatePayment({ payment: paymentData, tickets: [] });
-  
+
       if (paymentRes && paymentRes.data && paymentRes.data.ID) {
         const paymentID = paymentRes.data.ID;
         const ticketDataArray: TicketInterface[] = selectedSeats.map((seat: string) => ({
-
           Price: ticketPrice,
           PurchaseDate: new Date().toISOString(),
           Seat: { SeatNumber: seat },
           SeatTypeID: seatTypeID,
           PaymentID: paymentID,
-          MemberID: typeof memberID === 'number' ? memberID : Number(memberID), // แปลงเป็น number
+          MemberID: typeof memberID === 'number' ? memberID : Number(memberID),
         }));
 
-        // สร้างตั๋ว
-        await Promise.all(ticketDataArray.map(ticketData => CreateTicket(ticketData)));
-  
-        // สร้าง QR Code เพื่อใช้ส่งในอีเมล
-        const payload = promptpay("1459901028579", { amount });
-        const qrCodeDataUrl = await qrcode.toDataURL(payload);
+        await Promise.all(ticketDataArray.map((ticketData: TicketInterface) => CreateTicket(ticketData)));
 
-        // เรียกฟังก์ชันส่งอีเมลพร้อมข้อมูล
-        if (memberID !== null && memberID !== undefined) {
-          await SendTicketEmail({
-            memberID: Number(memberID), // แก้ไขให้แน่ใจว่าเป็น number
-            email: form.getFieldValue('contactEmail'),
-            concertName: selectedConcert,
-            qrCode: qrCodeDataUrl,
-            seats: selectedSeats,
-            amount: amount,
-          });
-        } else {
-          notification.error({
-            message: 'เกิดข้อผิดพลาด',
-            description: 'ไม่พบข้อมูลสมาชิก',
-          });
-        }
-  
         notification.success({
           message: 'การชำระเงินสำเร็จ',
-          description: 'การชำระเงินของคุณได้รับการประมวลผลเรียบร้อยแล้ว และตั๋วถูกส่งไปยังอีเมล',
+          description: 'การชำระเงินของคุณได้รับการประมวลผลเรียบร้อยแล้ว',
         });
 
-        // นำทางไปยังหน้า concerts หลังจากการอัปโหลดสำเร็จ
         navigate('/concerts');
       } else {
         notification.error({
@@ -138,7 +139,6 @@ const Payment: React.FC = () => {
         });
       }
     } catch (error) {
-      console.error('Error during payment creation:', error);
       notification.error({
         message: 'เกิดข้อผิดพลาด',
         description: 'เกิดข้อผิดพลาดในการสร้างการชำระเงินหรือตั๋ว',
@@ -196,6 +196,15 @@ const Payment: React.FC = () => {
           </Form.Item>
 
           <Form.Item>
+            <Checkbox checked={isConditionAccepted} onChange={(e) => setIsConditionAccepted(e.target.checked)}>
+              ฉันยอมรับเงื่อนไขการคืนเงิน
+            </Checkbox>
+            <Button type="link" onClick={() => setIsConditionModalVisible(true)}>
+              อ่านเงื่อนไขการคืนเงิน
+            </Button>
+          </Form.Item>
+
+          <Form.Item>
             <Button type="primary" htmlType="submit" loading={loading}>
               ชำระเงิน
             </Button>
@@ -203,40 +212,29 @@ const Payment: React.FC = () => {
         </Form>
       </Card>
 
-      <Modal
-        open={isModalVisible}
-        title="QR Code สำหรับการชำระเงิน"
-        onOk={handleUploadSlip}
-        onCancel={() => setIsModalVisible(false)}
-        footer={[
-          <Button key="back" onClick={() => setIsModalVisible(false)}>
-            ยกเลิก
-          </Button>,
-          <Button key="submit" type="primary" onClick={handleUploadSlip} loading={loading}>
-            อัปโหลดสลิป
-          </Button>,
-        ]}
-      >
-        {qrCodeUrl && <img src={qrCodeUrl} alt="QR Code" style={{ width: '100%' }} />}
-        <Upload
-          listType="picture-card"
-          fileList={fileList}
-          onChange={onChange}
-          beforeUpload={beforeUpload}
-          maxCount={1}
-        >
-          {fileList.length < 1 && (
-            <div>
-              <PlusOutlined />
-              <div style={{ marginTop: 8 }}>อัปโหลด</div>
-            </div>
-          )}
+      <Modal title="PromptPay QR Code" visible={isModalVisible} onCancel={() => setIsModalVisible(false)} footer={null}>
+        <p>สแกน QR Code เพื่อชำระเงิน:</p>
+        {qrCodeUrl && <img src={qrCodeUrl} alt="PromptPay QR Code" />}
+        <Upload onChange={onChange} fileList={fileList} beforeUpload={beforeUpload}>
+          <Button icon={<PlusOutlined />}>อัปโหลดสลิป</Button>
         </Upload>
+        <Button type="primary" onClick={handleUploadSlip} loading={loading}>
+          ยืนยันการชำระเงิน
+        </Button>
+      </Modal>
+
+      <Modal title="เงื่อนไขการคืนเงิน" visible={isConditionModalVisible} onCancel={() => setIsConditionModalVisible(false)} footer={null}>
+        <p>{conditionText}</p>
+        <Button onClick={() => setIsConditionModalVisible(false)}>
+          ปิด
+        </Button>
       </Modal>
     </div>
   );
 };
 
-const calculateAmount = (price: number, quantity: number) => price * quantity;
+function calculateAmount(price: number, quantity: number) {
+  return price * quantity;
+}
 
 export default Payment;

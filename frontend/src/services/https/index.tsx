@@ -3,6 +3,7 @@ import { MemberInterface } from "../../interfaces/IMember";
 import { PaymentInterface } from "../../interfaces/IPayment";
 import { SmsInterface } from "../../interfaces/ISms";
 import { TicketInterface } from "../../interfaces/ITicket";
+import { ConditionInterface } from "../../interfaces/ICondition";
 
 const apiUrl = "http://localhost:8000";
 
@@ -301,6 +302,46 @@ async function GetPaymentByMemberId(id: Number | undefined) {
   return res;
 }
 
+async function GetCondition() {
+  const requestOptions = {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  };
+
+  let res = await fetch(`${apiUrl}/Condition`, requestOptions)
+    .then((res) => {
+      if (res.status === 200) {
+        return res.json();
+      } else {
+        return false;
+      }
+    });
+
+  return res;
+}
+
+async function CreateConditionRefun( conditionRefunData : ConditionInterface) {
+  const requestOptions = {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  };
+
+  let res = await fetch(`${apiUrl}/CreateCondition`, requestOptions)
+    .then((res) => {
+      if (res.status === 200) {
+        return res.json();
+      } else {
+        return false;
+      }
+    });
+
+  return res;
+}
+
 export {
   GetMember,
   CreateMember,
@@ -313,5 +354,7 @@ export {
   GetConcert,
   GetSeatsByConsertId,
   GetPaymentByMemberId,
-  SendTicketEmail
+  SendTicketEmail,
+  GetCondition,
+  CreateConditionRefun
 };

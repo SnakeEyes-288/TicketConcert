@@ -4,7 +4,10 @@ go 1.22.5
 
 require gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 
-require github.com/sendgrid/rest v2.6.9+incompatible // indirect
+require (
+	github.com/google/uuid v1.6.0 // indirect
+	github.com/sendgrid/rest v2.6.9+incompatible // indirect
+)
 
 require (
 	github.com/bytedance/sonic v1.12.2 // indirect

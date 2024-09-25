@@ -33,6 +33,7 @@ func SetupDatabase() {
 		&entity.SeatType{},
 		&entity.Seat{},
 		&entity.Concert{},
+		&entity.ConditionRefun{},
 	)
 
 	hashedPassword, _ := HashPassword("wichitchaibas288")
@@ -45,6 +46,7 @@ func SetupDatabase() {
 		FirstName: "Sa",
 		LastName:  "67",
 		Birthday:  BirthDay,
+		PhoneNumber: "0990399752",
 	}
 	db.FirstOrCreate(Member, &entity.Member{Email: "B6512194@g.sut.ac.th"})
 
@@ -91,5 +93,6 @@ func SetupDatabase() {
 		}
 	}
 	
-
 }
+
+

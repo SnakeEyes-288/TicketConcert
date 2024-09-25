@@ -6,12 +6,12 @@ import Payment from './pages/Payment';
 import Login from './pages/Member/Login';
 import Register from './pages/Member/Register';
 import TicketInformation from './pages/TicketInformation';
-import { UserProvider } from './components/UserContext'; // นำเข้า UserProvider
+import { UserContextProvider } from './components/UserContext'; // เปลี่ยนเป็น UserContextProvider
 import RefundRequest from './pages/Refund/RefundRequest';
 
 const App: React.FC = () => {
   return (
-    <UserProvider> {/* ครอบทุกเส้นทางด้วย UserProvider */}
+    <UserContextProvider> {/* ครอบทุกเส้นทางด้วย UserContextProvider */}
       <Router>
         <Routes>
           {/* หน้า Login */}
@@ -20,14 +20,12 @@ const App: React.FC = () => {
           {/* หน้า Register */}
           <Route path="/register" element={<Register />} />
 
-          {/* Private Route ต้องล็อกอินก่อนถึงจะเข้าได้ */}
-          <Route>
-            <Route path="/concerts" element={<ConcertSelection />} />
-            <Route path="/select-seats" element={<SeatSelection />} />
-            <Route path="/payment" element={<Payment />} />
-            <Route path="/TicketInformation" element={<TicketInformation />} />
-            <Route path="/refund-request" element={<RefundRequest />} /> {/* เพิ่มเส้นทางนี้ */}
-          </Route>
+          {/* เส้นทางคอนเสิร์ตและการเลือกที่นั่ง */}
+          <Route path="/concerts" element={<ConcertSelection />} />
+          <Route path="/select-seats" element={<SeatSelection />} />
+          <Route path="/payment" element={<Payment />} />
+          <Route path="/TicketInformation" element={<TicketInformation />} />
+          <Route path="/refund-request" element={<RefundRequest />} /> {/* เพิ่มเส้นทางนี้ */}
 
           {/* เปลี่ยนเส้นทางหน้าแรกไปที่ Login */}
           <Route path="/" element={<Navigate to="/login" replace />} />
@@ -36,7 +34,7 @@ const App: React.FC = () => {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>
-    </UserProvider>
+    </UserContextProvider>
   );
 };
 
