@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';  
+import React, { useState } from 'react'; 
 import { Button, Modal, Typography, Form, Input, Select, Card, notification, Upload, Checkbox } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { PlusOutlined } from '@ant-design/icons';
-import { CreatePayment, CreateTicket, CreateConditionRefun, GetCondition } from '../../services/https';
+import { CreatePayment, CreateTicket, CreateConditionRefun, SendTicketEmail } from '../../services/https';
 import { useUser } from '../../components/UserContext';
 import promptpay from 'promptpay-qr';
 import * as qrcode from 'qrcode';
@@ -23,23 +23,11 @@ const Payment: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   const [fileList, setFileList] = useState<UploadFile[]>([]);
-  const [conditionText, setConditionText] = useState(''); // เก็บข้อความเงื่อนไข
-  const [isConditionAccepted, setIsConditionAccepted] = useState(false); // เก็บสถานะการยอมรับเงื่อนไข
-  const [isConditionModalVisible, setIsConditionModalVisible] = useState(false); // สถานะการแสดง Modal เงื่อนไข
+  const [conditionText] = useState('การคืนบัตรต้องคืนภายใน 7 วันหลังจากซื้อ');
+  const [isConditionAccepted, setIsConditionAccepted] = useState(false);
+  const [isConditionModalVisible, setIsConditionModalVisible] = useState(false);
 
   const amount = calculateAmount(ticketPrice, ticketQuantity);
-  //const conditionText = ''
-
-  useEffect(() => {
-    const fetchCondition = async () => {
-      const res = await GetCondition(); // ดึงข้อความเงื่อนไขจาก API
-      if (res) {
-        setConditionText(res.description); // บันทึกข้อความเงื่อนไขที่ได้รับ
-      }
-    };
-
-    fetchCondition();
-  }, []);
 
   const onChange = ({ fileList: newFileList }: { fileList: UploadFile[] }) => {
     setFileList(newFileList);
@@ -90,16 +78,14 @@ const Payment: React.FC = () => {
       return;
     }
 
-    // ข้อมูลสำหรับการสร้าง ConditionRefun
     const conditionRefunData = {
-      AcceptedTerms: isConditionAccepted, // สถานะการยอมรับเงื่อนไข
-      Description: conditionText, // ข้อความเงื่อนไขที่ผู้ใช้เห็น
+      AcceptedTerms: isConditionAccepted,
+      Description: conditionText,
     };
 
     try {
-      // ส่งข้อมูลไปสร้าง ConditionRefun
       const conditionRes = await CreateConditionRefun(conditionRefunData);
-      const conditionRefunID = conditionRes?.data?.ID; // เก็บ ID ของ ConditionRefun ที่สร้าง
+      const conditionRefunID = conditionRes?.data?.ID;
 
       const paymentData = {
         PaymentMethod: paymentMethod,
@@ -108,7 +94,7 @@ const Payment: React.FC = () => {
         Quantity: selectedSeats.length,
         Amount: amount,
         SlipImage: slipImage,
-        ConditionRefunID: conditionRefunID, // เชื่อมโยงกับ ConditionRefun
+        ConditionRefunID: conditionRefunID,
       };
 
       const paymentRes = await CreatePayment({ payment: paymentData, tickets: [] });
@@ -126,12 +112,31 @@ const Payment: React.FC = () => {
 
         await Promise.all(ticketDataArray.map((ticketData: TicketInterface) => CreateTicket(ticketData)));
 
-        notification.success({
-          message: 'การชำระเงินสำเร็จ',
-          description: 'การชำระเงินของคุณได้รับการประมวลผลเรียบร้อยแล้ว',
-        });
+        // สร้าง QR Code สำหรับการส่งอีเมล
+        const qrCodeDataUrl = await qrcode.toDataURL(promptpay("1459901028579", { amount }));
 
-        navigate('/concerts');
+        // ส่งอีเมลไปยังสมาชิก พร้อมใส่โทเค็นใน request header
+        const emailSent = await SendTicketEmail({
+          memberID: typeof memberID === 'number' ? memberID : Number(memberID),
+          email: form.getFieldValue('contactEmail'),
+          concertName: selectedConcert,
+          qrCode: qrCodeDataUrl,
+          seats: selectedSeats,
+          amount: amount,
+        }); // ไม่ต้องใส่อาร์กิวเมนต์ที่สองที่เป็น headers
+        
+        if (emailSent) {
+          notification.success({
+            message: 'การชำระเงินสำเร็จ',
+            description: 'ส่งข้อมูลตั๋วไปยังอีเมลของคุณเรียบร้อยแล้ว',
+          });
+        } else {
+          notification.error({
+            message: 'เกิดข้อผิดพลาดในการส่งอีเมล',
+            description: 'ไม่สามารถส่งข้อมูลตั๋วไปยังอีเมลได้',
+          });
+        }
+        
       } else {
         notification.error({
           message: 'เกิดข้อผิดพลาด',
@@ -200,41 +205,52 @@ const Payment: React.FC = () => {
               ฉันยอมรับเงื่อนไขการคืนเงิน
             </Checkbox>
             <Button type="link" onClick={() => setIsConditionModalVisible(true)}>
-              อ่านเงื่อนไขการคืนเงิน
+              ดูเงื่อนไขการคืนเงิน
             </Button>
           </Form.Item>
 
           <Form.Item>
-            <Button type="primary" htmlType="submit" loading={loading}>
-              ชำระเงิน
+            <Button type="primary" htmlType="submit" disabled={!isConditionAccepted || loading}>
+              ดำเนินการชำระเงิน
             </Button>
           </Form.Item>
         </Form>
       </Card>
 
-      <Modal title="PromptPay QR Code" visible={isModalVisible} onCancel={() => setIsModalVisible(false)} footer={null}>
-        <p>สแกน QR Code เพื่อชำระเงิน:</p>
-        {qrCodeUrl && <img src={qrCodeUrl} alt="PromptPay QR Code" />}
-        <Upload onChange={onChange} fileList={fileList} beforeUpload={beforeUpload}>
-          <Button icon={<PlusOutlined />}>อัปโหลดสลิป</Button>
+      <Modal visible={isModalVisible} footer={null} onCancel={() => setIsModalVisible(false)}>
+        <Title level={4}>สแกน QR Code เพื่อชำระเงิน</Title>
+        <img src={qrCodeUrl} alt="QR Code" />
+        <Upload
+          listType="picture-card"
+          fileList={fileList}
+          onChange={onChange}
+          beforeUpload={beforeUpload}
+          maxCount={1}
+        >
+          {fileList.length < 1 && (
+            <div>
+              <PlusOutlined />
+              <div style={{ marginTop: 8 }}>อัปโหลดสลิปการชำระเงิน</div>
+            </div>
+          )}
         </Upload>
-        <Button type="primary" onClick={handleUploadSlip} loading={loading}>
+        <Button type="primary" onClick={handleUploadSlip} disabled={fileList.length === 0 || !isConditionAccepted || loading}>
           ยืนยันการชำระเงิน
         </Button>
       </Modal>
 
-      <Modal title="เงื่อนไขการคืนเงิน" visible={isConditionModalVisible} onCancel={() => setIsConditionModalVisible(false)} footer={null}>
+      <Modal
+        visible={isConditionModalVisible}
+        onCancel={() => setIsConditionModalVisible(false)}
+        footer={<Button onClick={() => setIsConditionModalVisible(false)}>ปิด</Button>}
+      >
+        <Title level={4}>เงื่อนไขการคืนเงิน</Title>
         <p>{conditionText}</p>
-        <Button onClick={() => setIsConditionModalVisible(false)}>
-          ปิด
-        </Button>
       </Modal>
     </div>
   );
 };
 
-function calculateAmount(price: number, quantity: number) {
-  return price * quantity;
-}
+const calculateAmount = (price: number, quantity: number) => price * quantity;
 
 export default Payment;

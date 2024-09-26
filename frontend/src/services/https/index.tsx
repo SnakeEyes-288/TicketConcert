@@ -197,31 +197,25 @@ async function SendTicketEmail(data: {
   seats: string[], 
   amount: number 
 }): Promise<boolean> {
-  const requestOptions = {
-    method: "POST",
-    headers: {
-      ...getAuthHeaders(),
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
-  };
+  const token = "your-auth-token"; // แทนที่ด้วยการดึง token จากที่จัดเก็บจริงๆ
+  try {
+    const response = await axios.post(
+      `${apiUrl}/sendTicketEmail`,
+      data,
+      { headers: { Authorization: `Bearer ${token}` } } // อาร์กิวเมนต์ที่สองใส่ headers
+    );
 
-  const res = await fetch(`${apiUrl}/sendTicketEmail`, requestOptions)
-    .then((response) => {
-      if (response.status === 200) {
-        console.log("Email sent successfully");
-        return true;
-      } else {
-        console.error("Error during email sending:", response.statusText);
-        return false;
-      }
-    })
-    .catch((error) => {
-      console.error("Error sending email:", error);
+    if (response.status === 200) {
+      console.log("Email sent successfully");
+      return true;
+    } else {
+      console.error("Error during email sending:", response.statusText);
       return false;
-    });
-
-  return res;
+    }
+  } catch (error) {
+    console.error("Error sending email:", error);
+    return false;
+  }
 }
 
 // ฟังก์ชันสำหรับดึงข้อมูลประเภทที่นั่งคอนเสิร์ต
@@ -328,7 +322,8 @@ async function CreateConditionRefun( conditionRefunData : ConditionInterface) {
     headers: {
       "Content-Type": "application/json",
     },
-  };
+    body: JSON.stringify(conditionRefunData),
+  };  
 
   let res = await fetch(`${apiUrl}/CreateCondition`, requestOptions)
     .then((res) => {

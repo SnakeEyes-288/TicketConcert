@@ -14,8 +14,6 @@ import (
 	"github.com/SnakeEyes-288/sa-67-example/config"
 	"github.com/SnakeEyes-288/sa-67-example/entity"
 
-	"github.com/sendgrid/sendgrid-go"
-	"github.com/sendgrid/sendgrid-go/helpers/mail"
 	"github.com/google/uuid"
 
 )
@@ -134,45 +132,3 @@ func GetPaymentsByMemberID(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": payments})
 }
 
-// ฟังก์ชันสำหรับการส่งอีเมล
-func SendEmail(c *gin.Context) {
-    var data struct {
-        To      string `json:"to"`
-        Subject string `json:"subject"`
-        Body    string `json:"body"`
-    }
-
-    if err := c.ShouldBindJSON(&data); err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-        return
-    }
-
-    from := mail.NewEmail("Wichitchai", "wichitchai63@gmail.com")
-    to := mail.NewEmail("", data.To)
-
-    // กำหนดเนื้อหาอีเมล
-    message := mail.NewSingleEmail(from, data.Subject, to, data.Body, data.Body)
-
-    // ดึงคีย์ API จาก environment variables
-    apiKey := os.Getenv("HE5KBK9MRG7JZYEP612VKXBX") // ใช้ environment variable "SENDGRID_API_KEY"
-    if apiKey == "" {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "SendGrid API key not found"})
-        return
-    }
-
-    // สร้าง client สำหรับ SendGrid
-    client := sendgrid.NewSendClient(apiKey)
-    response, err := client.Send(message)
-
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-        return
-    }
-
-    // ตรวจสอบสถานะของ response
-    if response.StatusCode >= 200 && response.StatusCode < 300 {
-        c.JSON(http.StatusOK, gin.H{"status": "Email sent successfully"})
-    } else {
-        c.JSON(response.StatusCode, gin.H{"error": response.Body})
-    }
-}

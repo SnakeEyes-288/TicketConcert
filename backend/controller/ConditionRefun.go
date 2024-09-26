@@ -19,17 +19,19 @@ import (
 //}
 
 func ListCondition(c *gin.Context) {
-	var concerts []entity.ConditionRefun
+	var condition entity.ConditionRefun // เปลี่ยนจาก []entity.ConditionRefun เป็น entity.ConditionRefun เพื่อรับค่าแถวเดียว
 
 	db := config.DB()
-	if err := db.Find(&concerts).Error; err != nil {
+	// ใช้คำสั่ง First แทน Find เพื่อดึงข้อมูลแถวแรกมาเพียงแถวเดียว
+	if err := db.First(&condition).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
 
-	// ตรวจสอบให้แน่ใจว่าวันที่อยู่ในรูปแบบที่ถูกต้อง
-	c.JSON(http.StatusOK, concerts)
+	// ส่งข้อมูลที่ได้กลับไป
+	c.JSON(http.StatusOK, condition)
 }
+
 
 // CreateConditionRefun สร้างเงื่อนไขการคืนเงินใหม่
 func CreateConditionRefun(c *gin.Context) {

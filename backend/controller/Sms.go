@@ -2,9 +2,11 @@ package controller
 
 import (
 	"net/http"
-	"github.com/gin-gonic/gin"
+	"net/smtp"
+
 	"github.com/SnakeEyes-288/sa-67-example/config"
 	"github.com/SnakeEyes-288/sa-67-example/entity"
+	"github.com/gin-gonic/gin"
 )
 
 // POST /sms
@@ -80,3 +82,53 @@ func DeleteSms(c *gin.Context) {
     //}
     //return nil
 //}
+
+func SendEmail(c *gin.Context) {
+    
+	token := c.GetHeader("Authorization")
+
+    if token == "" {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Token is missing"})
+        return
+    }
+	
+	
+	var data struct {
+        To      string `json:"to"`
+        Subject string `json:"subject"`
+        Body    string `json:"body"`
+    }
+
+    if err := c.ShouldBindJSON(&data); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
+
+    // ตั้งค่าข้อมูลการส่งอีเมล
+    from := "wichitchai63@gmail.com"           // อีเมลผู้ส่ง
+    password := "ofcaklsvdrucvjjk"          // รหัสผ่านสำหรับแอป (App Password)
+    to := data.To                           // อีเมลผู้รับ
+
+    // ข้อมูลเซิร์ฟเวอร์ SMTP ของ Gmail
+    smtpHost := "smtp.gmail.com"
+    smtpPort := "587"
+
+    // สร้างข้อความอีเมล
+    message := []byte("Subject: " + data.Subject + "\r\n" +
+        "To: " + to + "\r\n" +
+        "From: " + from + "\r\n" +
+        "\r\n" + data.Body)
+
+    // ตั้งค่าการยืนยันตัวตน
+    auth := smtp.PlainAuth("", from, password, smtpHost)
+
+    // ส่งอีเมล
+    err := smtp.SendMail(smtpHost+":"+smtpPort, auth, from, []string{to}, message)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+
+    // ส่งสำเร็จ
+    c.JSON(http.StatusOK, gin.H{"status": "Email sent successfully"})
+}
