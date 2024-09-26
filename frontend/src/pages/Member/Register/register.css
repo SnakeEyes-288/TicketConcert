@@ -1,0 +1,95 @@
+/* register.css */
+
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+}
+
+#root {
+    height: 100%;
+}
+
+.register-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: linear-gradient(45deg, #ff0000, #000000); /* สีเดียวกับหน้า Login */
+}
+
+.register-form {
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 1.5rem; /* ลด padding ของฟอร์ม */
+    width: 90%;
+    max-width: 340px; /* ลดขนาดฟอร์มให้เล็กลงอีก */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.register-title {
+    text-align: center;
+    margin-bottom: 1rem;
+    color: #ff7e5f; /* สีเหมือนหน้า Login */
+    font-size: 1.4rem;
+}
+
+.error-message {
+    background-color: #ffebee;
+    color: #d32f2f;
+    padding: 0.5rem;
+    border-radius: 5px;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.ant-input, .ant-input-password, .ant-picker {
+    width: 100%;
+    padding: 0.3rem; /* ลด padding ของช่องกรอกข้อมูล */
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 0.9rem; /* ลดขนาดฟอนต์ */
+}
+
+.ant-input:focus, .ant-input-password:focus, .ant-picker:focus {
+    outline: none;
+    border-color: #ff7e5f;
+    box-shadow: 0 0 5px rgba(255, 126, 95, 0.5);
+}
+
+.ant-btn {
+    width: 100%;
+    padding: 0.5rem; /* ลด padding ของปุ่ม */
+    font-size: 1rem;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    color: white;
+    background: linear-gradient(90deg, #ff7e5f, #feb47b);
+    transition: all 0.3s ease;
+}
+
+.ant-btn:hover {
+    background: linear-gradient(90deg, #feb47b, #ff7e5f);
+}
+
+.ant-btn:disabled {
+    background: #cccccc;
+    cursor: not-allowed;
+}
+
+@media (max-height: 600px) {
+    .register-form {
+        padding: 1rem;
+    }
+
+    .register-title {
+        font-size: 1.2rem;
+        margin-bottom: 1rem;
+    }
+
+    .ant-btn {
+        padding: 0.4rem;
+    }
+}
