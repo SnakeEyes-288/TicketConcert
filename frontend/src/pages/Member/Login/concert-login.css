@@ -1,0 +1,124 @@
+/* concert-login.css */
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+#root {
+  height: 100%;
+}
+
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: linear-gradient(45deg, #ff0000, #000000);
+}
+
+.login-form {
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 2rem;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.login-title {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  color: #ff7e5f;
+  font-size: 1.5rem;
+}
+
+.input-group {
+  margin-bottom: 1rem;
+}
+
+.input-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 1rem;
+}
+
+.input-group input:focus {
+  outline: none;
+  border-color: #ff7e5f;
+  box-shadow: 0 0 5px rgba(255, 126, 95, 0.5);
+}
+
+.login-button {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 1rem;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  color: white;
+  background: linear-gradient(90deg, #ff7e5f, #feb47b);
+  transition: all 0.3s ease;
+}
+
+.login-button:hover {
+  background: linear-gradient(90deg, #feb47b, #ff7e5f);
+}
+
+.login-button:disabled {
+  background: #cccccc;
+  cursor: not-allowed;
+}
+
+.error-message {
+  background-color: #ffebee;
+  color: #d32f2f;
+  padding: 0.5rem;
+  border-radius: 5px;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.signup-link {
+  text-align: center;
+  margin-top: 1rem;
+  color: #666;
+}
+
+.signup-link a {
+  color: #ff7e5f;
+  text-decoration: none;
+}
+
+.signup-link a:hover {
+  text-decoration: underline;
+}
+
+@media (max-height: 600px) {
+  .login-form {
+    padding: 1rem;
+  }
+  
+  .login-title {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+  }
+  
+  .input-group {
+    margin-bottom: 0.5rem;
+  }
+  
+  .login-button {
+    padding: 0.5rem;
+  }
+}

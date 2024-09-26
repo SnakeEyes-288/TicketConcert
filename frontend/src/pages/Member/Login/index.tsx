@@ -1,11 +1,13 @@
-import React, { useState } from 'react'; 
+//index.tsx                                                                                                                                            import React, { useState } from 'react';  
 import { useNavigate, Link } from 'react-router-dom';
-import { Form, Input, Button, Typography, Row, Col, Card, Alert } from 'antd';
+import { Form, Input, Button } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useUser } from '../../../components/UserContext'; // ดึงข้อมูลจาก UserContext
-import '../../Member/Login/index.css'; // นำเข้าไฟล์ index.css
-
-const { Title, Text } = Typography;
+//import '../../Member/Login/index.css'; // นำเข้าไฟล์ index.css
+import './concert-login.css';
+import { useState } from 'react';
+import React from 'react';
+//import 'antd/dist/antd.css';
 
 const SignIn: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -50,16 +52,12 @@ const SignIn: React.FC = () => {
   };
 
   return (
-    <Row justify="center" align="middle" style={{ minHeight: '100vh', backgroundColor: '#f0f2f5' }}>
-      <Col xs={24} sm={16} md={12} lg={8}>
-        <Card bordered={false} style={{ padding: '20px' }}>
-          <Title level={3} style={{ textAlign: 'center' }}>Login</Title>
-          
-          {error && (
-            <Alert message={error} type="error" showIcon style={{ marginBottom: '16px' }} />
-          )}
-
-          <Form name="login" onFinish={handleSubmit} layout="vertical">
+    <div className="login-container">
+      <div className="login-form">
+        <h1 className="login-title">Login</h1>
+        {error && <div className="error-message">{error}</div>}
+        <Form name="login" onFinish={handleSubmit} layout="vertical">
+          <div className="input-group">
             <Form.Item name="email" label="Email" rules={[{ required: true, message: 'Please input your email!' }]}>
               <Input 
                 prefix={<UserOutlined />} 
@@ -72,7 +70,8 @@ const SignIn: React.FC = () => {
                 placeholder="Enter your email" 
               />
             </Form.Item>
-
+          </div>
+          <div className="input-group">
             <Form.Item name="password" label="Password" rules={[{ required: true, message: 'Please input your password!' }]}>
               <Input.Password 
                 prefix={<LockOutlined />} 
@@ -84,21 +83,16 @@ const SignIn: React.FC = () => {
                 placeholder="Enter your password" 
               />
             </Form.Item>
-
-            <Form.Item>
-              <Button type="primary" htmlType="submit" block loading={loading}>
-                {loading ? 'Logging in...' : 'Login'}
-              </Button>
-            </Form.Item>
-          </Form>
-
-          <div style={{ textAlign: 'center' }}>
-            <Text>Don't have an account? <Link to="/register">Sign up here</Link>.</Text>
           </div>
-        </Card>
-      </Col>
-    </Row>
+          <Button type="primary" htmlType="submit" className="login-button" loading={loading}>
+            {loading ? 'Logging in...' : 'Login'}
+          </Button>
+        </Form>
+        <div className="signup-link">
+          Don't have an account? <Link to="/register">Sign up here</Link>.
+        </div>
+      </div>
+    </div>
   );
-};
-
+}
 export default SignIn;
