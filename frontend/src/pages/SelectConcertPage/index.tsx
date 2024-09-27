@@ -1,16 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'; 
 import { Button, Card, Row, Col, Spin, Alert, Typography, Avatar } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import moment from 'moment';
 import { ConcertInterface } from '../../interfaces/IConcert';
 import { GetConcert } from '../../services/https';
 import { useUser } from '../../components/UserContext';
-import '../SelectConcertPage/index.css'; // นำเข้าไฟล์ index.css
+import '../SelectConcertPage/index.css';
+import { UserOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 
 const ConcertSelection: React.FC = () => {
-  const { username, imageUrl } = useUser();
+  const { username, imageUrl, memberID } = useUser(); // ดึงข้อมูลจาก UserContext
   const [concerts, setConcerts] = useState<ConcertInterface[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,11 +33,11 @@ const ConcertSelection: React.FC = () => {
   }, []);
 
   const handleSelectConcert = (concert: ConcertInterface) => {
-    navigate('/select-seats', { state: { selectedConcert: concert } });
+    navigate('/select-seats', { state: { selectedConcert: concert, memberID } });
   };
 
   const handleViewPaymentHistory = () => {
-    navigate('/TicketInformation');
+    navigate('/TicketInformation', { state: { memberID } });
   };
 
   if (loading) {
@@ -50,9 +51,17 @@ const ConcertSelection: React.FC = () => {
   return (
     <div className="concert-selection-container">
       {/* User Information */}
-      <div className="user-info">
-        <Avatar src={imageUrl} size="large" style={{ marginRight: '8px' }} />
-        <Text>{username}</Text>
+      <div className="profile-container">
+        <Avatar 
+          size={50} 
+          src={imageUrl} 
+          icon={!imageUrl && <UserOutlined />} 
+        />
+        <div className="profile-info">
+          <Typography.Text className="profile-username">
+            {username || "No Username"}
+          </Typography.Text>
+        </div>
       </div>
 
       <Title level={2} className="concert-title">

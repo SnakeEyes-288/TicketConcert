@@ -20,24 +20,25 @@ const SignIn: React.FC = () => {
   const handleSubmit = async () => {
     setLoading(true);
     const loginData = { email, password };
-
+  
     const requestOptions = {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(loginData),
     };
-
+  
     try {
       const res = await fetch('http://localhost:8000/login', requestOptions);
-
+  
       if (res.ok) {
         const data = await res.json();
         
-        // บันทึก Token และ MemberID ลงใน UserContext
+        // บันทึก Token และ MemberID ลงใน UserContext และ localStorage
         setToken(data.token);
+        localStorage.setItem("token", data.token); // เก็บ Token ใน localStorage
         setMemberID(data.id);
-
-        // เปลี่ยนเส้นทางไปยังหน้าประวัติการชำระเงิน
+  
+        // เปลี่ยนเส้นทางไปยังหน้าอื่น
         navigate("/concerts", { state: { email } });
       } else {
         const errorData = await res.json();
@@ -50,6 +51,7 @@ const SignIn: React.FC = () => {
       setLoading(false);
     }
   };
+  
 
   return (
     <div className="login-container">

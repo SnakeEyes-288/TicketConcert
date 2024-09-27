@@ -37,17 +37,22 @@ async function SignIn(data: MemberInterface) {
 }
 
 // ฟังก์ชันสำหรับดึงข้อมูลสมาชิก
-async function GetMember() {
-  try {
-    const res = await axios.get(`${apiUrl}/Member`, {
-      headers: getAuthHeaders(),
-    });
-    return res.data;
-  } catch (error: unknown) {
-    console.error("Error fetching member data:", (error as Error).message);
-    return (error as any)?.response;
+async function GetMember(memberID: number) { 
+  const requestOptions = {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  };
+
+  let res = await fetch(`${apiUrl}/user/${memberID}`, requestOptions);
+  if (res.status === 200) {
+    return res.json(); // คืนค่าข้อมูล JSON
+  } else {
+    return false;
   }
 }
+
 
 // ฟังก์ชันสำหรับสร้างสมาชิกใหม่ (ลงทะเบียน)
 async function CreateMember(data: MemberInterface) {

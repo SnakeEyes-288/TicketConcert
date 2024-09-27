@@ -1,13 +1,14 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'; 
+import { GetMember } from '../services/https'; // อย่าลืม import ฟังก์ชันนี้
 
 interface UserContextInterface {
   token: string | null;
   memberID: string | null;
   setToken: (token: string | null) => void;
   setMemberID: (memberID: string | null) => void;
-  username?: string; // เพิ่มถ้าคุณต้องการ
-  email?: string;    // เพิ่มถ้าคุณต้องการ
-  imageUrl?: string; // เพิ่ม imageUrl
+  username?: string; 
+  email?: string;    
+  imageUrl?: string; 
 }
 
 const UserContext = createContext<UserContextInterface | undefined>(undefined);
@@ -15,14 +16,31 @@ const UserContext = createContext<UserContextInterface | undefined>(undefined);
 const UserContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [token, setToken] = useState<string | null>(null);
   const [memberID, setMemberID] = useState<string | null>(null);
+  const [username, setUsername] = useState<string | undefined>(undefined);
+  const [email, setEmail] = useState<string | undefined>(undefined);
+  const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
 
-  // สมมุติว่า username และ email ได้มาจากที่ใดที่หนึ่ง
-  const username = "exampleUsername"; // แทนที่ด้วยข้อมูลจริง
-  const email = "example@example.com"; // แทนที่ด้วยข้อมูลจริง
-  const imageUrl = "https://via.placeholder.com/150"; // กำหนด URL ของรูปภาพ
+  useEffect(() => {
+    const fetchMemberData = async () => {
+      if (memberID) { // ตรวจสอบว่า memberID มีค่า
+        try {
+          const memberData = await GetMember(Number(memberID)); // ส่ง memberID ไปยังฟังก์ชัน
+          if (memberData) {
+            setUsername(memberData.Username); // ใช้ Username จาก API
+            setEmail(memberData.Email); // ใช้ Email จาก API
+            setImageUrl(memberData.imageUrl); // หากมีภาพโปรไฟล์ สามารถใช้ได้ที่นี่
+          }
+        } catch (error) {
+          console.error("Error fetching member data:", error);
+        }
+      }
+    };
+    
+    fetchMemberData();
+  }, [memberID]); // เพิ่ม memberID เป็น dependency เพื่อให้ฟังก์ชันทำงานใหม่เมื่อ memberID เปลี่ยน
 
   return (
-    <UserContext.Provider value={{ token, memberID, setToken, setMemberID, username, email,imageUrl }}>
+    <UserContext.Provider value={{ token, memberID, setToken, setMemberID, username, email, imageUrl }}>
       {children}
     </UserContext.Provider>
   );
@@ -37,4 +55,4 @@ const useUser = () => {
   return context;
 };
 
-export { UserContextProvider, useUser }; // ส่งออก UserContextProvider และ useUser
+export { UserContextProvider, useUser };

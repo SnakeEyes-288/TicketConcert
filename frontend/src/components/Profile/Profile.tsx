@@ -1,4 +1,4 @@
-import React from "react";
+import React from "react"; 
 import { Avatar, Typography } from "antd";
 import { UserOutlined } from "@ant-design/icons";
 import "./Profile.css";
@@ -9,7 +9,7 @@ interface ProfileProps {
   imageUrl?: string; // optional, can be passed or use default icon
 }
 
-const Profile: React.FC<ProfileProps> = ({ username, imageUrl }) => {
+const Profile: React.FC<ProfileProps> = ({ username, email, imageUrl }) => {
   return (
     <div className="profile-container">
       <Avatar 
@@ -18,7 +18,8 @@ const Profile: React.FC<ProfileProps> = ({ username, imageUrl }) => {
         icon={!imageUrl && <UserOutlined />} // Use default icon if no image provided
       />
       <div className="profile-info">
-        <Typography.Text className="profile-username">{username}</Typography.Text>
+        <Typography.Text className="profile-username">{username || "No Username"}</Typography.Text>
+        <Typography.Text className="profile-email">{email || "No Email"}</Typography.Text>
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 	//"time"
 	//"gorm.io/gorm"
@@ -41,7 +42,7 @@ func CreateMember(c *gin.Context) {
         c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
         return
     }
-
+	fmt.Println("Creating member:", user)
     c.JSON(http.StatusCreated, gin.H{"message": "Created success", "data": u})
 }
 

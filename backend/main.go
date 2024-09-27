@@ -35,7 +35,7 @@ func main() {
 		// Member Routes
 		router.POST("/login", controller.SignIn)
 		router.POST("/Member", controller.SignUp)
-
+		router.GET("/user/:id",controller.GetUser)
 		// Concert Routes
 		router.GET("/concerts", controller.ListConcerts)
 		router.GET("/seats/:id", controller.GetSeatsByConcertID)

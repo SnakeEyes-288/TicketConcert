@@ -43,7 +43,7 @@ type (
     FirstName string    `json:"first_name"`
     LastName  string    `json:"last_name"`
     BirthDay  string    `json:"birthday"`
-
+    PhoneNumber string  `json:"phonenumber"`
    }
 
 )
@@ -87,6 +87,7 @@ func SignUp(c *gin.Context) {
         FirstName: payload.FirstName, // ใช้ฟิลด์ FirstName
         LastName:  payload.LastName,  // ใช้ฟิลด์ LastName
         Birthday:  birthday,
+        PhoneNumber: payload.PhoneNumber,
     }
 
     // Get DB instance
