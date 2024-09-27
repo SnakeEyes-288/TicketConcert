@@ -1,6 +1,6 @@
 import React, { useState } from 'react'; 
 import { Button, Modal, Typography, Form, Input, Select, Card, notification, Upload, Checkbox } from 'antd';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation /*useNavigate*/ } from 'react-router-dom';
 import { PlusOutlined } from '@ant-design/icons';
 import { CreatePayment, CreateTicket, CreateConditionRefun, SendTicketEmail } from '../../services/https';
 import { useUser } from '../../components/UserContext';
@@ -14,7 +14,7 @@ const { Option } = Select;
 
 const Payment: React.FC = () => {
   const location = useLocation();
-  const navigate = useNavigate();
+  //const navigate = useNavigate();
   const { selectedConcert = '', selectedSeats = [], selectedSeatType = '', ticketQuantity = 1, ticketPrice = 0, seatTypeID = 0 } = location.state || {};
   const { memberID } = useUser();
   const [form] = Form.useForm();
@@ -114,16 +114,16 @@ const Payment: React.FC = () => {
 
         // สร้าง QR Code สำหรับการส่งอีเมล
         const qrCodeDataUrl = await qrcode.toDataURL(promptpay("1459901028579", { amount }));
-
-        // ส่งอีเมลไปยังสมาชิก พร้อมใส่โทเค็นใน request header
+        setQrCodeUrl(qrCodeDataUrl);
+        
         const emailSent = await SendTicketEmail({
           memberID: typeof memberID === 'number' ? memberID : Number(memberID),
-          email: form.getFieldValue('contactEmail'),
-          concertName: selectedConcert,
+          To : form.getFieldValue('contactEmail'),
+          concertName: "Test",
           qrCode: qrCodeDataUrl,
           seats: selectedSeats,
           amount: amount,
-        }); // ไม่ต้องใส่อาร์กิวเมนต์ที่สองที่เป็น headers
+        }); 
         
         if (emailSent) {
           notification.success({

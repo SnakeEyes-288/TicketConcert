@@ -189,20 +189,35 @@ async function GetTicket( memberID: number ){
 };
 
 // ฟังก์ชันสำหรับส่งอีเมลบัตรคอนเสิร์ต
-async function SendTicketEmail(data: {   
-  memberID: number, 
-  email: string, 
-  concertName: string, 
-  qrCode: string, 
-  seats: string[], 
-  amount: number 
+async function SendTicketEmail(data?: {    
+  memberID?: number, // ทำให้ optional เพื่อให้กำหนดค่าเริ่มต้นได้
+  To?: string, 
+  concertName?: string, 
+  qrCode?: string, 
+  seats?: string[], 
+  amount?: number 
 }): Promise<boolean> {
-  const token = "your-auth-token"; // แทนที่ด้วยการดึง token จากที่จัดเก็บจริงๆ
+  const token = "your-auth-token"; // ควรใช้การดึง token จริงจากการจัดเก็บ
+  //const apiUrl = "http://your-api-url.com"; // ตั้งค่า URL ของ API จริง
+
+  // กำหนดค่าเริ่มต้นหากไม่ได้ส่งข้อมูลมา
+  const defaultData = {
+    memberID: 1, 
+    To: "b6512194@g.sut.ac.th", 
+    concertName: "Test Concert", 
+    qrCode: "default_qr_code", 
+    seats: ["P10-C3", "P9-C3"], 
+    amount: 70
+  };
+
+  // ถ้า data ไม่มีค่า ให้ใช้ defaultData
+  const requestData = data || defaultData;
+
   try {
     const response = await axios.post(
       `${apiUrl}/sendTicketEmail`,
-      data,
-      { headers: { Authorization: `Bearer ${token}` } } // อาร์กิวเมนต์ที่สองใส่ headers
+      requestData,
+      { headers: { Authorization: `Bearer ${token}` } }
     );
 
     if (response.status === 200) {
@@ -212,11 +227,21 @@ async function SendTicketEmail(data: {
       console.error("Error during email sending:", response.statusText);
       return false;
     }
-  } catch (error) {
-    console.error("Error sending email:", error);
+  } catch (error: any) {
+    if (error.response) {
+      // เซิร์ฟเวอร์ตอบกลับแต่ไม่ใช่ 2xx
+      console.error("Server responded with error:", error.response.data);
+    } else if (error.request) {
+      // ไม่มีการตอบสนองจากเซิร์ฟเวอร์
+      console.error("No response received:", error.request);
+    } else {
+      // เกิดข้อผิดพลาดระหว่างตั้งค่า request
+      console.error("Error setting up request:", error.message);
+    }
     return false;
   }
 }
+
 
 // ฟังก์ชันสำหรับดึงข้อมูลประเภทที่นั่งคอนเสิร์ต
 async function GetSeatType() {

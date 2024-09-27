@@ -45,8 +45,7 @@ func main() {
 		router.POST("/ticket", controller.CreateTicket)
 		router.GET("/payment/:id", controller.GetPaymentsByMemberID) // เส้นทางสำหรับดึงข้อมูลการชำระเงินของสมาชิก
 		router.GET("/tickets/member/:memberID", controller.ListTicketsByMemberID)
-		// เปลี่ยนการเรียกใช้งาน SendEmail ให้ถูกต้อง
-		router.POST("/sendTicketEmail", controller.SendEmail)
+		router.POST("/sendTicketEmail", controller.SendEmail)// เปลี่ยนการเรียกใช้งาน SendEmail ให้ถูกต้อง
 		router.GET("/Condition",controller.ListCondition)
 		router.POST("/CreateCondition",controller.CreateConditionRefun)
 		router.POST("/api/refund-request",controller.RefundRequest)

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'; 
+import React, { useState, useEffect } from 'react';  
 import { List, Spin, Alert, Card, Typography, Button } from 'antd';
 import { useUser } from '../../components/UserContext'; // ดึงข้อมูลจาก UserContext
 import { GetTicket } from '../../services/https'; // นำเข้าฟังก์ชัน GetTicket
@@ -63,20 +63,19 @@ const TicketHistory: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: '20px' }}>
+    <div style={{ padding: '20px', maxHeight: '80vh', overflowY: 'auto' }}> {/* ตั้งค่า scroll */}
       <List
         itemLayout="vertical"
         size="large"
         dataSource={Array.isArray(ticketData) ? ticketData : []} // ตรวจสอบให้แน่ใจว่าเป็น array
         renderItem={(item: TicketInterface) => (
           <List.Item>
-            <Card style={{ marginBottom: '16px' }}>
+            <Card style={{ marginBottom: '16px', maxWidth: '100%' }}> {/* ปรับขนาด card */}
               <Text strong>หมายเลขที่นั่ง:</Text> {item.Seat?.SeatNumber || 'ไม่ระบุ'}<br />
               <Text strong>ราคาตั๋ว:</Text> {item.Price} บาท<br />
               <Text strong>วันที่ซื้อ:</Text> {item.PurchaseDate ? new Date(item.PurchaseDate).toLocaleString() : 'ไม่ระบุ'}<br />
               <Text strong>สถานะการชำระเงิน:</Text> {item.Payment?.Status || 'ไม่ระบุ'}<br />
               <Text strong>วิธีการชำระเงิน:</Text> {item.Payment?.PaymentMethod || 'ไม่ระบุ'}<br />
-              <Text strong>ยอดเงินรวม:</Text> {item.Payment?.Amount || 0} บาท<br />
               <Text strong>ประเภทที่นั่ง:</Text> 
               {item.Seat?.SeatType ? (
                 <>
@@ -104,4 +103,4 @@ const TicketHistory: React.FC = () => {
   );
 };
 
-export default TicketHistory; // ส่งออก Component ที่แก้ไขแล้ว
+export default TicketHistory;
