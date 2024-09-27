@@ -12,6 +12,7 @@ type Sms struct {
 	PhoneNumber string
 	MessageContent string
 	SentDate time.Time
+	// totalRefund float64
 
 	MemberID *uint
 	Member Member

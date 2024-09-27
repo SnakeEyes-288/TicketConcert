@@ -48,7 +48,7 @@ func main() {
 		router.POST("/sendTicketEmail", controller.SendEmail)// เปลี่ยนการเรียกใช้งาน SendEmail ให้ถูกต้อง
 		router.GET("/Condition",controller.ListCondition)
 		router.POST("/CreateCondition",controller.CreateConditionRefun)
-		router.POST("/api/refund-request",controller.RefundRequest)
+		router.POST("/refund-request",controller.RefundRequest)
 	}
 
 	r.GET("/", func(c *gin.Context) {

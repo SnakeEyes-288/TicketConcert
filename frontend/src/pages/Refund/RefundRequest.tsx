@@ -1,5 +1,5 @@
 import React from "react";
-import { Form, Input, Button, message, Modal } from "antd";
+import { Form, Input, Button, message, Modal, Result } from "antd";
 import { useNavigate, useLocation } from "react-router-dom";
 import "./RefundRequest.css";
 import Profile from "./Profile/Profile";
@@ -23,6 +23,9 @@ const RefundRequest: React.FC = () => {
 
   // Handler for form submission
   const handleSubmit = async (values: any) => {
+    console.log("Form Values:", values); // ตรวจสอบค่าที่ได้จากฟอร์ม
+    console.log("Logged In User:", loggedInUser); // ตรวจสอบค่าของผู้ใช้ที่ล็อกอิน
+  
     if (
       values.username !== loggedInUser.username ||
       values.phone !== loggedInUser.phone ||
@@ -31,21 +34,21 @@ const RefundRequest: React.FC = () => {
       messageApi.error("ข้อมูลไม่ถูกต้อง");
       return;
     }
-
+  
     // เรียกฟังก์ชัน submitRefundRequest จาก services
     const result = await submitRefundRequest(values, ticket);
-
+  
     if (result.success) {
-      console.log("Form values: ", values);
       Modal.success({
         title: "สำเร็จ",
         content: "ส่งคำขอสำเร็จ",
       });
-      navigate("/"); // กลับไปหน้าหลักหลังส่งคำขอสำเร็จ
+      navigate("/concerts"); // กลับไปหน้าหลักหลังส่งคำขอสำเร็จ
     } else {
       messageApi.error("เกิดข้อผิดพลาดในการส่งคำขอ: " + result.message);
     }
   };
+  
 
   const handleBack = () => {
     navigate("/concerts"); // Navigate to the homepage

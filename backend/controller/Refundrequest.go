@@ -1,19 +1,31 @@
 package controller
 
 import (
+	// "fmt"
 	"net/http"
 
-	"github.com/SnakeEyes-288/sa-67-example/entity"
 	"github.com/SnakeEyes-288/sa-67-example/config"
+	"github.com/SnakeEyes-288/sa-67-example/entity"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 // RefundRequest handles refund requests
 func RefundRequest(c *gin.Context) {
+	var r entity.Refundrequest
     var requestData struct {
         UserID   uint   `json:"user_id"`
-        ConcertID uint   `json:"concert_id"`
+        ConcertID uint  `json:"concert_id"`
     }
+
+	r = entity.Refundrequest{
+		Refund_amount:	r.Refund_amount,
+    	Refund_Date:	r.Refund_Date,
+		Refund_reason:	r.Refund_reason,
+		Username:		r.Username,
+    	Email:			r.Email,
+		PhoneNumber:	r.PhoneNumber,
+	}
 
     // Bind JSON to requestData
     if err := c.ShouldBindJSON(&requestData); err != nil {
@@ -41,8 +53,32 @@ func RefundRequest(c *gin.Context) {
         totalRefund += payment.Amount
     }
 	
-    /*// ส่งข้อความไปที่ entity SMS (สมมุติว่ามีฟังก์ชัน SendSMS)
-    entity.Sms(currentUser.Phone, "Your refund of amount " + fmt.Sprintf("%.2f", totalRefund) + " has been processed.")
+    // ส่งข้อความไปที่ entity SMS (สมมุติว่ามีฟังก์ชัน SendSMS)
+    // entity.Sms(currentUser.PhoneNumber, "Your refund of amount " + fmt.Sprintf("%.2f", totalRefund) + " has been processed.")
 
-    c.JSON(http.StatusOK, gin.H{"message": "Refund processed", "amount": totalRefund})*/
+    // c.JSON(http.StatusOK, gin.H{"message": "Refund processed", "amount": totalRefund})
+}
+
+// CheckTicketAcceptance checks if the ticket was accepted before purchase
+func CheckTicketAcceptance(c *gin.Context) {
+	// รับ ticketID จาก request
+	ticketID := c.Param("ticketID")
+
+	// ตรวจสอบว่ามีข้อมูลการยอมรับบัตรในฐานข้อมูลหรือไม่
+	var acceptanceRecord entity.ConditionRefun
+	err := config.DB().Where("ticket_id = ? AND accepted = true", ticketID).First(&acceptanceRecord).Error
+
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			// ถ้าไม่พบข้อมูลการยอมรับบัตร
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Ticket was not accepted before purchase"})
+			return
+		}
+		// ถ้ามีข้อผิดพลาดในการดึงข้อมูล
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to check ticket acceptance"})
+		return
+	}
+
+	// ถ้าพบข้อมูลการยอมรับ
+	c.JSON(http.StatusOK, gin.H{"message": "Ticket was accepted before purchase"})
 }
