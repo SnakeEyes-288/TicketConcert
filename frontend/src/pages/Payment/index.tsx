@@ -171,7 +171,7 @@ const Payment: React.FC = () => {
       const qrCodeDataUrl = await qrcode.toDataURL(payload);
       setQrCodeUrl(qrCodeDataUrl);
       setIsModalVisible(true);
-    } else if (amount > 0 && paymentMethod === "BankTransfer") {
+    } else if (amount > 0 && paymentMethod === "โอนชำระผ่านธนาคาร") {
       setIsModalVisible(true);
     }
   };
@@ -256,7 +256,7 @@ const Payment: React.FC = () => {
           </div>
         )}
 
-        {paymentMethod === 'BankTransfer' && (
+        {paymentMethod === 'โอนชำระผ่านธนาคาร' && (
           <div style={{ textAlign: 'center' }}>
             <Title level={4}>ชำระเงินด้วยการโอนผ่านธนาคาร</Title>
             <Text> รายละเอียดบัญชีธนาคาร</Text><br />
