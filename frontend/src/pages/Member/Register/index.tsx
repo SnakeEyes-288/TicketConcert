@@ -14,13 +14,13 @@ const Register: React.FC = () => {
 
     const handleSubmit = async (values: any) => {
         const memberData: MemberInterface = {
-            username: values.username.trim(),
-            password: values.password,
-            email: values.email.trim(),
+            Username: values.username.trim(),
+            Password: values.password,
+            Email: values.email.trim(),
             first_name: values.firstName.trim(),
             last_name: values.lastName.trim(),
-            birthDay: values.birthday ? values.birthday.format('YYYY-MM-DD') : '',
-            phone_number: values.phonenumber.trim(),
+            birthday: values.birthday ? values.birthday.format('YYYY-MM-DD') : '',
+            PhoneNumber: values.phonenumber.trim(),
         };
 
         setLoading(true);
