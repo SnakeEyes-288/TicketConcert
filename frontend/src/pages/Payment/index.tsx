@@ -17,13 +17,35 @@ const Payment: React.FC = () => {
   const location = useLocation();
   const { selectedConcert = '', selectedSeats = [], selectedSeatType = '', ticketQuantity = 1, ticketPrice = 0, seatTypeID = 0 } = location.state || {};
   const { memberID } = useUser();
+  const { email } = location.state || {}; // รับค่า email ที่ส่งมาจากหน้า Login
   const [form] = Form.useForm();
   const [paymentMethod, setPaymentMethod] = useState('เลือกวิธีการชำระเงิน');
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   const [fileList, setFileList] = useState<UploadFile[]>([]);
-  const [conditionText] = useState('การคืนบัตรต้องคืนภายใน 7 วันหลังจากซื้อ');
+  const conditionText = (
+    <>
+      <h2>เงื่อนไขการซื้อบัตรคอนเสิร์ต</h2>
+      <p>กรุณาอ่านและยอมรับเงื่อนไขต่อไปนี้ก่อนดำเนินการซื้อบัตร:</p>
+      <p>
+        <strong>จำนวนบัตร:</strong> ข้าพเจ้าตกลงว่าจะซื้อบัตรไม่เกินจำนวนที่กำหนดต่อการซื้อในหนึ่งครั้ง (เช่น 4 ใบต่อคน) และเข้าใจว่าไม่สามารถซื้อบัตรเพิ่มเติมได้หากเกินจำนวนที่กำหนด
+        <br />
+        <strong>การคืนเงินและการยกเลิก:</strong> ข้าพเจ้าเข้าใจว่าการซื้อบัตรนี้ไม่สามารถขอคืนเงินหรือแลกเปลี่ยนได้ ยกเว้นในกรณีที่ผู้จัดงานมีการยกเลิกหรือเลื่อนงานเท่านั้น ซึ่งจะมีเงื่อนไขในการคืนเงินตามที่ผู้จัดกำหนด
+        <br />
+        <strong>การเลือกที่นั่ง:</strong> ข้าพเจ้าเข้าใจว่าการเลือกที่นั่งจะเป็นไปตามระบบที่กำหนด และหากที่นั่งที่เลือกไม่มีให้บริการ ระบบจะทำการเลือกที่นั่งอื่นในระดับราคาเดียวกันให้โดยอัตโนมัติ
+        <br />
+        <strong>การชำระเงิน:</strong> ข้าพเจ้าตกลงที่จะชำระเงินตามช่องทางที่กำหนด และหากการชำระเงินไม่สำเร็จภายในเวลาที่กำหนด ระบบจะทำการยกเลิกการสั่งซื้อโดยอัตโนมัติ
+        <br />
+        <strong>การยืนยันตัวตน:</strong> ข้าพเจ้ายอมรับว่าข้อมูลที่ใช้ในการซื้อบัตรเป็นข้อมูลที่ถูกต้องและสามารถตรวจสอบได้ หากมีการตรวจพบว่าข้อมูลไม่ถูกต้อง ทางผู้จัดงานมีสิทธิ์ในการยกเลิกบัตรหรือปฏิเสธการเข้าใช้บริการ
+        <br />
+        <strong>การใช้บัตร:</strong> ข้าพเจ้าตกลงที่จะใช้บัตรคอนเสิร์ตตามวันที่ เวลา และสถานที่ที่กำหนดเท่านั้น และจะไม่ใช้บัตรเพื่อการซื้อขายต่อในลักษณะที่ผิดกฎหมาย
+        <br />
+        <strong>การเข้าชมงาน:</strong> ข้าพเจ้าเข้าใจว่าการเข้าชมงานคอนเสิร์ตจะต้องปฏิบัติตามกฎระเบียบของสถานที่จัดงาน และยอมรับความเสี่ยงใดๆ ที่อาจเกิดขึ้นในระหว่างการเข้าร่วมงาน
+      </p>
+    </>
+  );
+    
   const [isConditionAccepted, setIsConditionAccepted] = useState(false);
   const [isConditionModalVisible, setIsConditionModalVisible] = useState(false);
 
@@ -78,11 +100,26 @@ const Payment: React.FC = () => {
       return;
     }
 
+    const getConditionText = () => {
+      return `เงื่อนไขการซื้อบัตรคอนเสิร์ตกรุณาอ่านและยอมรับเงื่อนไขต่อไปนี้ก่อนดำเนินการซื้อบัตร:
+    จำนวนบัตร: ข้าพเจ้าตกลงว่าจะซื้อบัตรไม่เกินจำนวนที่กำหนดต่อการซื้อในหนึ่งครั้ง (เช่น 4 ใบต่อคน) และเข้าใจว่าไม่สามารถซื้อบัตรเพิ่มเติมได้หากเกินจำนวนที่กำหนด
+    การคืนเงินและการยกเลิก: ข้าพเจ้าเข้าใจว่าการซื้อบัตรนี้ไม่สามารถขอคืนเงินหรือแลกเปลี่ยนได้ ยกเว้นในกรณีที่ผู้จัดงานมีการยกเลิกหรือเลื่อนงานเท่านั้น ซึ่งจะมีเงื่อนไขในการคืนเงินตามที่ผู้จัดกำหนด
+    การเลือกที่นั่ง: ข้าพเจ้าเข้าใจว่าการเลือกที่นั่งจะเป็นไปตามระบบที่กำหนด และหากที่นั่งที่เลือกไม่มีให้บริการ ระบบจะทำการเลือกที่นั่งอื่นในระดับราคาเดียวกันให้โดยอัตโนมัติ
+    การชำระเงิน: ข้าพเจ้าตกลงที่จะชำระเงินตามช่องทางที่กำหนด และหากการชำระเงินไม่สำเร็จภายในเวลาที่กำหนด ระบบจะทำการยกเลิกการสั่งซื้อโดยอัตโนมัติ
+    การยืนยันตัวตน: ข้าพเจ้ายอมรับว่าข้อมูลที่ใช้ในการซื้อบัตรเป็นข้อมูลที่ถูกต้องและสามารถตรวจสอบได้ หากมีการตรวจพบว่าข้อมูลไม่ถูกต้อง ทางผู้จัดงานมีสิทธิ์ในการยกเลิกบัตรหรือปฏิเสธการเข้าใช้บริการ
+    การใช้บัตร: ข้าพเจ้าตกลงที่จะใช้บัตรคอนเสิร์ตตามวันที่ เวลา และสถานที่ที่กำหนดเท่านั้น และจะไม่ใช้บัตรเพื่อการซื้อขายต่อในลักษณะที่ผิดกฎหมาย
+    การเข้าชมงาน: ข้าพเจ้าเข้าใจว่าการเข้าชมงานคอนเสิร์ตจะต้องปฏิบัติตามกฎระเบียบของสถานที่จัดงาน และยอมรับความเสี่ยงใดๆ ที่อาจเกิดขึ้นในระหว่างการเข้าร่วมงาน`;
+    };
+    
+    // การเรียกใช้งานฟังก์ชัน
+    const conditionText2 = getConditionText();
+    
+
     const conditionRefunData = {
       AcceptedTerms: isConditionAccepted,
-      Description: conditionText,
+      Description: conditionText2,
     };
-
+    
     try {
       const conditionRes = await CreateConditionRefun(conditionRefunData);
       const conditionRefunID = conditionRes?.data?.ID;
@@ -117,9 +154,8 @@ const Payment: React.FC = () => {
 
         const emailSent = await SendTicketEmail({
           memberID: typeof memberID === 'number' ? memberID : Number(memberID),
-          To: form.getFieldValue('contactEmail'),
-          concertName: "Test",
-          qrCode: qrCodeDataUrl,
+          To: email,
+          concertName: selectedConcert,
           seats: selectedSeats,
           amount: amount,
         });
@@ -289,7 +325,6 @@ const Payment: React.FC = () => {
         onCancel={() => setIsConditionModalVisible(false)}
         footer={null}
       >
-        <Title level={4}>เงื่อนไขการคืนเงิน</Title>
         <Text>{conditionText}</Text>
       </Modal>
     </div>

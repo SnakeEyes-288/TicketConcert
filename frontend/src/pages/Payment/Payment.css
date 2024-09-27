@@ -78,4 +78,13 @@
     justify-content: flex-end; /* จัดปุ่มไปที่ด้านขวา */
     padding: 16px; /* กำหนด padding ของ footer */
   }
+
+  .condition-text {
+    margin-bottom: 1em; /* เพิ่มระยะห่างระหว่างย่อหน้า */
+  }
+  
+  .condition-text strong {
+    display: block; /* ทำให้ข้อความหนาแสดงผลในบรรทัดใหม่ */
+  }
+  
   

@@ -38,7 +38,7 @@ const SignIn: React.FC = () => {
         setMemberID(data.id);
 
         // เปลี่ยนเส้นทางไปยังหน้าประวัติการชำระเงิน
-        navigate("/concerts");
+        navigate("/concerts", { state: { email } });
       } else {
         const errorData = await res.json();
         setError(errorData.error || "Login failed. Please check your email and password.");
