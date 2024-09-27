@@ -1,12 +1,13 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
-	"net/smtp"
 
 	"github.com/SnakeEyes-288/sa-67-example/config"
 	"github.com/SnakeEyes-288/sa-67-example/entity"
 	"github.com/gin-gonic/gin"
+	"gopkg.in/gomail.v2"
 )
 
 // POST /sms
@@ -84,19 +85,21 @@ func DeleteSms(c *gin.Context) {
 //}
 
 func SendEmail(c *gin.Context) {
-    
-	token := c.GetHeader("Authorization")
-
+    token := c.GetHeader("Authorization")
     if token == "" {
         c.JSON(http.StatusUnauthorized, gin.H{"error": "Token is missing"})
         return
     }
-	
-	
-	var data struct {
-        To      string `json:"to"`
-        Subject string `json:"subject"`
-        Body    string `json:"body"`
+
+    var data struct {
+        To          string   `json:"to"`
+        Subject     string   `json:"subject"`
+        Body        string   `json:"body"`
+        MemberID    int      `json:"memberID"`
+        ConcertName string   `json:"concertName"`
+        QRCode      string   `json:"qrCode"` // ต้องเป็น Base64
+        Seats       []string `json:"seats"`
+        Amount      int      `json:"amount"`
     }
 
     if err := c.ShouldBindJSON(&data); err != nil {
@@ -104,31 +107,56 @@ func SendEmail(c *gin.Context) {
         return
     }
 
-    // ตั้งค่าข้อมูลการส่งอีเมล
-    from := "wichitchai63@gmail.com"           // อีเมลผู้ส่ง
-    password := "ofcaklsvdrucvjjk"          // รหัสผ่านสำหรับแอป (App Password)
-    to := data.To                           // อีเมลผู้รับ
-
-    // ข้อมูลเซิร์ฟเวอร์ SMTP ของ Gmail
-    smtpHost := "smtp.gmail.com"
-    smtpPort := "587"
-
-    // สร้างข้อความอีเมล
-    message := []byte("Subject: " + data.Subject + "\r\n" +
-        "To: " + to + "\r\n" +
-        "From: " + from + "\r\n" +
-        "\r\n" + data.Body)
-
-    // ตั้งค่าการยืนยันตัวตน
-    auth := smtp.PlainAuth("", from, password, smtpHost)
-
-    // ส่งอีเมล
-    err := smtp.SendMail(smtpHost+":"+smtpPort, auth, from, []string{to}, message)
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+    if data.To == "" {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Recipient email is required"})
         return
     }
 
-    // ส่งสำเร็จ
+    from := "wichitchai63@gmail.com"
+    password := "ofcaklsvdrucvjjk"
+
+    smtpHost := "smtp.gmail.com"
+    smtpPort := 465
+
+    // สร้าง message โดยใช้ gomail
+    m := gomail.NewMessage()
+    m.SetHeader("From", from)
+    m.SetHeader("To", data.To)
+    m.SetHeader("Subject", data.Subject)
+
+    // ตรวจสอบว่า QRCode ถูกส่งมาเป็น Base64 แล้วหรือยัง
+    if data.QRCode == "" {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "QR Code is missing"})
+        return
+    }
+
+    // สร้างเนื้อหาของอีเมลที่แสดงรูป QR Code
+    body := fmt.Sprintf(`
+        <h1>Ticket Confirmation</h1>
+        <p>Concert: %s</p>
+        <p>Seats: %v</p>
+        <p>Amount: %d</p>
+        <p><img src="data:image/png;base64,%s" alt="QR Code" /></p>
+        <p>Member ID: %d</p>
+    `, data.ConcertName, data.Seats, data.Amount, data.QRCode, data.MemberID)
+
+    m.SetBody("text/html", body)
+
+    // ส่งอีเมล
+    d := gomail.NewDialer(smtpHost, smtpPort, from, password)
+    d.SSL = true
+
+    if err := d.DialAndSend(m); err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{
+            "error": fmt.Sprintf("Failed to send email: %v", err),
+        })
+        return
+    }
+
     c.JSON(http.StatusOK, gin.H{"status": "Email sent successfully"})
 }
+
+
+
+
+
