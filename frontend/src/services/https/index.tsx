@@ -369,7 +369,8 @@ async function CreateConditionRefun( conditionRefunData : ConditionInterface) {
 
 async function submitRefundRequest(values: any, ticket: any){
   try {
-    const response = await fetch("/api/refund-request", {
+    // eslint-disable-next-line no-template-curly-in-string
+    const response = await fetch(`${apiUrl}/refund-request`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -390,7 +391,6 @@ async function submitRefundRequest(values: any, ticket: any){
   }
 
 }
-
 
 export {
   GetMember,
