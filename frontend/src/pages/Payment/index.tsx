@@ -1,5 +1,5 @@
-import React, { useState } from 'react';  
-import { Button, Modal, Typography, Form, Input, Select, Card, notification, Upload, Checkbox } from 'antd';
+import React, { useState } from 'react'; 
+import { Button, Modal, Typography, Form, Input, Select, Card, notification, Upload, Checkbox, Row, Col } from 'antd';
 import { useLocation } from 'react-router-dom';
 import { PlusOutlined } from '@ant-design/icons';
 import { CreatePayment, CreateTicket, CreateConditionRefun, SendTicketEmail } from '../../services/https';
@@ -8,8 +8,9 @@ import promptpay from 'promptpay-qr';
 import * as qrcode from 'qrcode';
 import { UploadFile } from 'antd';
 import { TicketInterface } from '../../interfaces/ITicket';
+import './Payment.css';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 const { Option } = Select;
 
 const Payment: React.FC = () => {
@@ -78,7 +79,7 @@ const Payment: React.FC = () => {
     }
 
     const conditionRefunData = {
-      AcceptedTerms: isConditionAccepted, // ส่งค่า isConditionAccepted กลับไปฐานข้อมูล
+      AcceptedTerms: isConditionAccepted,
       Description: conditionText,
     };
 
@@ -111,19 +112,18 @@ const Payment: React.FC = () => {
 
         await Promise.all(ticketDataArray.map((ticketData: TicketInterface) => CreateTicket(ticketData)));
 
-        // สร้าง QR Code สำหรับการส่งอีเมล
         const qrCodeDataUrl = await qrcode.toDataURL(promptpay("1459901028579", { amount }));
         setQrCodeUrl(qrCodeDataUrl);
-        
+
         const emailSent = await SendTicketEmail({
           memberID: typeof memberID === 'number' ? memberID : Number(memberID),
-          To : form.getFieldValue('contactEmail'),
+          To: form.getFieldValue('contactEmail'),
           concertName: "Test",
           qrCode: qrCodeDataUrl,
           seats: selectedSeats,
           amount: amount,
-        }); 
-        
+        });
+
         if (emailSent) {
           notification.success({
             message: 'การชำระเงินสำเร็จ',
@@ -135,7 +135,6 @@ const Payment: React.FC = () => {
             description: 'ไม่สามารถส่งข้อมูลตั๋วไปยังอีเมลได้',
           });
         }
-        
       } else {
         notification.error({
           message: 'เกิดข้อผิดพลาด',
@@ -167,35 +166,49 @@ const Payment: React.FC = () => {
 
   const handlePayment = async (values: any) => {
     const id = "1459901028579";
-    if (amount > 0) {
+    if (amount > 0 && paymentMethod === "PromptPay") {
       const payload = promptpay(id, { amount });
       const qrCodeDataUrl = await qrcode.toDataURL(payload);
       setQrCodeUrl(qrCodeDataUrl);
+      setIsModalVisible(true);
+    } else if (amount > 0 && paymentMethod === "BankTransfer") {
       setIsModalVisible(true);
     }
   };
 
   return (
-    <div style={{ margin: '20px' }}>
-      <Card>
+    <div className="centered-container">
+      <Card className="payment-card">
         <Title level={4}>การชำระเงินสำหรับคอนเสิร์ต: {selectedConcert}</Title>
-        <p><strong>ที่นั่งที่เลือก:</strong> {selectedSeats.join(', ')}</p>
-        <p><strong>ประเภทที่นั่ง:</strong> {selectedSeatType}</p>
-        <p><strong>จำนวนบัตร:</strong> {ticketQuantity}</p>
-        <p><strong>ราคาต่อบัตร:</strong> {ticketPrice} บาท</p>
-        <p><strong>ยอดรวม:</strong> {amount} บาท</p>
+        <Row gutter={[16, 16]}>
+          <Col span={12}>
+            <Text strong>ที่นั่งที่เลือก:</Text> {selectedSeats.join(', ')}
+          </Col>
+          <Col span={12}>
+            <Text strong>ประเภทที่นั่ง:</Text> {selectedSeatType}
+          </Col>
+          <Col span={12}>
+            <Text strong>จำนวนบัตร:</Text> {ticketQuantity}
+          </Col>
+          <Col span={12}>
+            <Text strong>ราคาต่อบัตร:</Text> {ticketPrice} บาท
+          </Col>
+          <Col span={12}>
+            <Text strong>ยอดรวม:</Text> {amount} บาท
+          </Col>
+        </Row>
 
         <Form form={form} layout="vertical" onFinish={handlePayment} style={{ marginTop: '20px' }}>
           <Form.Item label="ชื่อผู้ติดต่อ" name="contactName" rules={[{ required: true, message: 'กรุณากรอกชื่อผู้ติดต่อ' }]}>
             <Input placeholder="ชื่อผู้ติดต่อ" />
           </Form.Item>
           <Form.Item label="อีเมลผู้ติดต่อ" name="contactEmail" rules={[{ required: true, message: 'กรุณากรอกอีเมลผู้ติดต่อ' }]}>
-            <Input placeholder="อีเมลผู้ติดต่อ" />
+            <Input type="email" placeholder="อีเมลผู้ติดต่อ" />
           </Form.Item>
           <Form.Item label="วิธีการชำระเงิน" name="paymentMethod" rules={[{ required: true, message: 'กรุณาเลือกวิธีการชำระเงิน' }]}>
-            <Select onChange={setPaymentMethod}>
+            <Select placeholder="เลือกวิธีการชำระเงิน" onChange={(value) => setPaymentMethod(value)}>
               <Option value="PromptPay">PromptPay</Option>
-              <Option value="CreditCard">บัตรเครดิต</Option>
+              <Option value="โอนชำระผ่านธนาคาร">โอนชำระผ่านธนาคาร</Option>
             </Select>
           </Form.Item>
 
@@ -203,44 +216,88 @@ const Payment: React.FC = () => {
             <Checkbox checked={isConditionAccepted} onChange={(e) => setIsConditionAccepted(e.target.checked)}>
               ฉันยอมรับเงื่อนไขการคืนเงิน
             </Checkbox>
-            <Button type="link" onClick={() => setIsConditionModalVisible(true)}>
-              ดูเงื่อนไขการคืนเงิน
-            </Button>
+            <Button type="link" onClick={() => setIsConditionModalVisible(true)}>อ่านเงื่อนไข</Button>
           </Form.Item>
 
-          {/* ลบการบังคับให้ยอมรับเงื่อนไขในการชำระเงิน */}
           <Form.Item>
-            <Button type="primary" htmlType="submit" disabled={loading}>
+            <Button type="primary" htmlType="submit" block loading={loading}>
               ดำเนินการชำระเงิน
             </Button>
           </Form.Item>
         </Form>
-
-        <Modal visible={isModalVisible} onCancel={() => setIsModalVisible(false)} footer={null}>
-          <Title level={5}>QR Code สำหรับชำระเงิน</Title>
-          {qrCodeUrl && <img src={qrCodeUrl} alt="QR Code" />}
-          <Upload
-            fileList={fileList}
-            beforeUpload={beforeUpload}
-            onChange={onChange}
-            maxCount={1}
-          >
-            <Button icon={<PlusOutlined />}>อัปโหลดสลิปการโอนเงิน</Button>
-          </Upload>
-          <Button type="primary" onClick={handleUploadSlip} loading={loading}>
-            ยืนยันการชำระเงิน
-          </Button>
-        </Modal>
-
-        <Modal visible={isConditionModalVisible} onCancel={() => setIsConditionModalVisible(false)} footer={null}>
-          <Title level={5}>เงื่อนไขการคืนเงิน</Title>
-          <p>{conditionText}</p>
-        </Modal>
       </Card>
+
+      <Modal
+        visible={isModalVisible}
+        onCancel={() => setIsModalVisible(false)}
+        footer={null}
+      >
+        {paymentMethod === 'PromptPay' && (
+          <div style={{ textAlign: 'center' }}>
+            <Title level={4}>ชำระเงินด้วย PromptPay</Title>
+            {qrCodeUrl && <img src={qrCodeUrl} alt="PromptPay QR Code" />}
+            <Upload
+              listType="picture-card"
+              fileList={fileList}
+              onChange={onChange}
+              beforeUpload={beforeUpload}
+              accept=".jpg,.jpeg,.png"
+            >
+              {fileList.length < 1 && (
+                <div>
+                  <PlusOutlined />
+                  <div style={{ marginTop: 8 }}>อัปโหลดสลิป</div>
+                </div>
+              )}
+            </Upload>
+            <Button type="primary" onClick={handleUploadSlip} loading={loading} block>
+              ยืนยันการชำระเงิน
+            </Button>
+          </div>
+        )}
+
+        {paymentMethod === 'BankTransfer' && (
+          <div style={{ textAlign: 'center' }}>
+            <Title level={4}>ชำระเงินด้วยการโอนผ่านธนาคาร</Title>
+            <Text> รายละเอียดบัญชีธนาคาร</Text><br />
+            <Text> ชื่อบัญชี : นายวิชิตชัย เพ็งพารา</Text><br />
+            <Text> หมายเลขบัญชี : 429-0-64278-0</Text><br />
+            <Text> ธนาคาร : กรุงไทย</Text>
+            <Upload
+              listType="picture-card"
+              fileList={fileList}
+              onChange={onChange}
+              beforeUpload={beforeUpload}
+              accept=".jpg,.jpeg,.png"
+            >
+              {fileList.length < 1 && (
+                <div>
+                  <PlusOutlined />
+                  <div style={{ marginTop: 8 }}>อัปโหลดสลิป</div>
+                </div>
+              )}
+            </Upload>
+            <Button type="primary" onClick={handleUploadSlip} loading={loading} block>
+              ยืนยันการชำระเงิน
+            </Button>
+          </div>
+        )}
+      </Modal>
+
+      <Modal
+        visible={isConditionModalVisible}
+        onCancel={() => setIsConditionModalVisible(false)}
+        footer={null}
+      >
+        <Title level={4}>เงื่อนไขการคืนเงิน</Title>
+        <Text>{conditionText}</Text>
+      </Modal>
     </div>
   );
 };
 
-const calculateAmount = (price: number, quantity: number): number => price * quantity;
+const calculateAmount = (ticketPrice: number, ticketQuantity: number) => {
+  return ticketPrice * ticketQuantity;
+};
 
 export default Payment;

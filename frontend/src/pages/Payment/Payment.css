@@ -1,0 +1,81 @@
+/* จัดให้ Card อยู่ตรงกลาง */
+.centered-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    min-height: 100vh; /* ให้แน่ใจว่ากลางแนวตั้ง */
+  }
+  
+  .payment-card {
+    max-width: 600px; /* จำกัดความกว้างของ Card */
+    width: 100%;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  
+  /* กำหนดขนาดของ modal content เพื่อป้องกันการล้นหน้าจอ */
+  .my-modal-content {
+    max-height: 70vh; /* ให้ความสูงของ modal ไม่เกิน 70% ของหน้าจอ */
+    overflow-y: auto; /* แสดงสกรอลล์บาร์ในแนวตั้งถ้าข้อมูลเกิน */
+  }
+  
+  /* กำหนดขนาดของภาพ QR Code เพื่อป้องกันไม่ให้ล้น */
+  .qr-code-image {
+    max-width: 100%; /* ให้ภาพ QR Code ขยายตามความกว้างของ container */
+    height: auto;    /* ให้ความสูงของภาพปรับตามสัดส่วน */
+  }
+  
+  /* เพิ่มการจัดการปุ่มให้ไม่ล้นและทำให้แสดงเต็ม */
+  .form-container {
+    display: flex;
+    flex-direction: column;
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px; /* เพิ่ม padding เพื่อเพิ่มพื้นที่ */
+  }
+  
+  /* จัดการ modal ให้รองรับข้อมูลยาว */
+  .ant-modal-body {
+    max-height: 70vh; /* จำกัดความสูงของ modal */
+    overflow-y: auto; /* ให้สกรอลล์บาร์ในกรณีที่ข้อมูลเกิน */
+  }
+  
+  /* Responsive design: ปรับแต่งสำหรับหน้าจอขนาดเล็ก */
+  @media (max-width: 768px) {
+    .ant-btn {
+        width: 100%;
+        max-width: 200px;
+        margin: 20px auto; /* เพิ่ม margin ให้ปุ่มห่างจากขอบล่าง */
+        display: block;
+        text-align: center;
+      }
+  
+    .ant-form-item {
+      text-align: center; /* จัดให้อยู่กลางบนหน้าจอขนาดเล็ก */
+    }
+  }
+  
+  /* ปุ่มอัปโหลด */
+  .ant-upload.ant-upload-select {
+    width: 100%;
+    max-width: 300px; /* จำกัดความกว้างของปุ่มอัปโหลด */
+    margin: 0 auto;   /* จัดปุ่มให้อยู่กึ่งกลาง */
+  }
+  
+  /* ปรับแต่งปุ่ม */
+  .ant-btn {
+    width: 100%;
+    max-width: 200px; /* ปรับขนาดปุ่มไม่ให้ใหญ่เกินไป */
+    margin: 10px auto;   /* จัดปุ่มให้อยู่กลางและเพิ่มช่องว่างระหว่างปุ่ม */
+    display: block;
+    text-align: center;
+  }
+  
+  /* จัด footer ของ modal */
+  .ant-modal-footer {
+    display: flex;
+    justify-content: flex-end; /* จัดปุ่มไปที่ด้านขวา */
+    padding: 16px; /* กำหนด padding ของ footer */
+  }
+  
