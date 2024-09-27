@@ -3,6 +3,7 @@ import { Form, Input, Button, message, Modal } from "antd";
 import { useNavigate, useLocation } from "react-router-dom";
 import "./RefundRequest.css";
 import Profile from "./Profile/Profile";
+import { submitRefundRequest } from "../../services/https"; // ดึงฟังก์ชันจากไฟล์ services
 
 const RefundRequest: React.FC = () => {
   const [form] = Form.useForm();
@@ -15,42 +16,13 @@ const RefundRequest: React.FC = () => {
 
   // Example of logged-in user data for validation
   const loggedInUser = {
-    username: "JohnDoe",
-    phone: "0123456789",
-    email: "john.doe@example.com",
+    username: "Sa1",
+    phone: "0990399752",
+    email: "B6512194@g.sut.ac.th",
   };
-
-  // Simulate sending data to a server
-  const submitRefundRequest = async (values: any) => {
-    try {
-      const response = await fetch("/api/refund-request", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ ...values, ticket }), // ส่งข้อมูลตั๋วไปด้วย
-      });
-  
-      // Check response status
-      if (response.ok) {
-        Modal.success({
-          title: "สำเร็จ",
-          content: "ส่งคำขอสำเร็จ",
-        });
-        navigate("/"); // กลับไปหน้าหลักหลังส่งคำขอสำเร็จ
-      } else {
-        throw new Error("Request failed");
-      }
-    } catch (error) {
-      // ตรวจสอบว่า error เป็น instance ของ Error หรือไม่
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      messageApi.error("เกิดข้อผิดพลาดในการส่งคำขอ: " + errorMessage);
-    }
-  };
-  
 
   // Handler for form submission
-  const handleSubmit = (values: any) => {
+  const handleSubmit = async (values: any) => {
     if (
       values.username !== loggedInUser.username ||
       values.phone !== loggedInUser.phone ||
@@ -59,7 +31,20 @@ const RefundRequest: React.FC = () => {
       messageApi.error("ข้อมูลไม่ถูกต้อง");
       return;
     }
-    submitRefundRequest(values);
+
+    // เรียกฟังก์ชัน submitRefundRequest จาก services
+    const result = await submitRefundRequest(values, ticket);
+
+    if (result.success) {
+      console.log("Form values: ", values);
+      Modal.success({
+        title: "สำเร็จ",
+        content: "ส่งคำขอสำเร็จ",
+      });
+      navigate("/"); // กลับไปหน้าหลักหลังส่งคำขอสำเร็จ
+    } else {
+      messageApi.error("เกิดข้อผิดพลาดในการส่งคำขอ: " + result.message);
+    }
   };
 
   const handleBack = () => {

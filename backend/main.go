@@ -49,7 +49,7 @@ func main() {
 		router.POST("/sendTicketEmail", controller.SendEmail)
 		router.GET("/Condition",controller.ListCondition)
 		router.POST("/CreateCondition",controller.CreateConditionRefun)
-
+		router.POST("/api/refund-request",controller.RefundRequest)
 	}
 
 	r.GET("/", func(c *gin.Context) {

@@ -20,4 +20,6 @@ type Payment struct {
     // ความสัมพันธ์แบบ One-to-One กับเงื่อนไขการคืนเงิน
     ConditionRefunID *uint
     ConditionRefun   ConditionRefun
+
+    Refundrequests []Refundrequest
 }
