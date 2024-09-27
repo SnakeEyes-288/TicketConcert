@@ -362,6 +362,26 @@ async function CreateConditionRefun( conditionRefunData : ConditionInterface) {
   return res;
 }
 
+async function submitRefundRequest(values: any, ticket: any){
+  const requestOptions = {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ ...values, ticket }),
+  };  
+
+  let res = await fetch(`${apiUrl}/refund-request`, requestOptions)
+    .then((res) => {
+      if (res.status === 200) {
+        return res.json();
+      } else {
+        return false;
+      }
+    });
+
+  return res;
+}
 export {
   GetMember,
   CreateMember,
@@ -376,5 +396,31 @@ export {
   GetPaymentByMemberId,
   SendTicketEmail,
   GetCondition,
-  CreateConditionRefun
+  CreateConditionRefun,
+  submitRefundRequest
 };
+
+
+/*export const submitRefundRequest = async (values: any, ticket: any) => {
+    try {
+      const response = await fetch("/api/refund-request", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ ...values, ticket }), // ส่งข้อมูลตั๋วไปด้วย
+      });
+  
+      // ตรวจสอบสถานะ response
+      if (response.ok) {
+        return { success: true };
+      } else {
+        throw new Error("Request failed");
+      }
+    } catch (error) {
+      // ตรวจสอบว่า error เป็น instance ของ Error หรือไม่
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      return { success: false, message: errorMessage };
+    }
+  };
+*/
