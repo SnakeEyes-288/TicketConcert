@@ -13,11 +13,11 @@ import './Payment.css';
 const { Title, Text } = Typography;
 const { Option } = Select;
 
+
 const Payment: React.FC = () => {
   const location = useLocation();
   const { selectedConcert = '', selectedSeats = [], selectedSeatType = '', ticketQuantity = 1, ticketPrice = 0, seatTypeID = 0 } = location.state || {};
   const { memberID } = useUser();
-  const { email } = location.state || {}; // รับค่า email ที่ส่งมาจากหน้า Login
   const [form] = Form.useForm();
   const [paymentMethod, setPaymentMethod] = useState('เลือกวิธีการชำระเงิน');
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -45,7 +45,7 @@ const Payment: React.FC = () => {
       </p>
     </>
   );
-    
+  
   const [isConditionAccepted, setIsConditionAccepted] = useState(false);
   const [isConditionModalVisible, setIsConditionModalVisible] = useState(false);
 
@@ -101,8 +101,7 @@ const Payment: React.FC = () => {
     }
 
     const getConditionText = () => {
-      return `เงื่อนไขการซื้อบัตรคอนเสิร์ตกรุณาอ่านและยอมรับเงื่อนไขต่อไปนี้ก่อนดำเนินการซื้อบัตร:
-    จำนวนบัตร: ข้าพเจ้าตกลงว่าจะซื้อบัตรไม่เกินจำนวนที่กำหนดต่อการซื้อในหนึ่งครั้ง (เช่น 4 ใบต่อคน) และเข้าใจว่าไม่สามารถซื้อบัตรเพิ่มเติมได้หากเกินจำนวนที่กำหนด
+      return `เงื่อนไขการซื้อบัตรคอนเสิร์ตกรุณาอ่านและยอมรับเงื่อนไขต่อไปนี้ก่อนดำเนินการซื้อบัตร:จำนวนบัตร: ข้าพเจ้าตกลงว่าจะซื้อบัตรไม่เกินจำนวนที่กำหนดต่อการซื้อในหนึ่งครั้ง (เช่น 4 ใบต่อคน) และเข้าใจว่าไม่สามารถซื้อบัตรเพิ่มเติมได้หากเกินจำนวนที่กำหนด
     การคืนเงินและการยกเลิก: ข้าพเจ้าเข้าใจว่าการซื้อบัตรนี้ไม่สามารถขอคืนเงินหรือแลกเปลี่ยนได้ ยกเว้นในกรณีที่ผู้จัดงานมีการยกเลิกหรือเลื่อนงานเท่านั้น ซึ่งจะมีเงื่อนไขในการคืนเงินตามที่ผู้จัดกำหนด
     การเลือกที่นั่ง: ข้าพเจ้าเข้าใจว่าการเลือกที่นั่งจะเป็นไปตามระบบที่กำหนด และหากที่นั่งที่เลือกไม่มีให้บริการ ระบบจะทำการเลือกที่นั่งอื่นในระดับราคาเดียวกันให้โดยอัตโนมัติ
     การชำระเงิน: ข้าพเจ้าตกลงที่จะชำระเงินตามช่องทางที่กำหนด และหากการชำระเงินไม่สำเร็จภายในเวลาที่กำหนด ระบบจะทำการยกเลิกการสั่งซื้อโดยอัตโนมัติ
@@ -112,14 +111,13 @@ const Payment: React.FC = () => {
     };
     
     // การเรียกใช้งานฟังก์ชัน
-    const conditionText2 = getConditionText();
+    const conditionText = getConditionText();
     
-
     const conditionRefunData = {
       AcceptedTerms: isConditionAccepted,
-      Description: conditionText2,
+      Description: conditionText,
     };
-    
+
     try {
       const conditionRes = await CreateConditionRefun(conditionRefunData);
       const conditionRefunID = conditionRes?.data?.ID;
@@ -154,7 +152,7 @@ const Payment: React.FC = () => {
 
         const emailSent = await SendTicketEmail({
           memberID: typeof memberID === 'number' ? memberID : Number(memberID),
-          To: email,
+          To: form.getFieldValue('contactEmail'),
           concertName: selectedConcert,
           seats: selectedSeats,
           amount: amount,
