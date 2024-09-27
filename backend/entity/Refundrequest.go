@@ -8,7 +8,7 @@ type Refundrequest struct {
     gorm.Model
     Refund_amount    string
     Refund_Date      time.Time
-	
+	Refund_reson	 string
     
     Refundapproval     []Refundapproval
 
