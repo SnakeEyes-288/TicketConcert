@@ -1,6 +1,6 @@
-import React, { useState } from 'react'; 
+import React, { useState } from 'react';  
 import { Button, Modal, Typography, Form, Input, Select, Card, notification, Upload, Checkbox } from 'antd';
-import { useLocation /*useNavigate*/ } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { PlusOutlined } from '@ant-design/icons';
 import { CreatePayment, CreateTicket, CreateConditionRefun, SendTicketEmail } from '../../services/https';
 import { useUser } from '../../components/UserContext';
@@ -14,7 +14,6 @@ const { Option } = Select;
 
 const Payment: React.FC = () => {
   const location = useLocation();
-  //const navigate = useNavigate();
   const { selectedConcert = '', selectedSeats = [], selectedSeatType = '', ticketQuantity = 1, ticketPrice = 0, seatTypeID = 0 } = location.state || {};
   const { memberID } = useUser();
   const [form] = Form.useForm();
@@ -79,7 +78,7 @@ const Payment: React.FC = () => {
     }
 
     const conditionRefunData = {
-      AcceptedTerms: isConditionAccepted,
+      AcceptedTerms: isConditionAccepted, // ส่งค่า isConditionAccepted กลับไปฐานข้อมูล
       Description: conditionText,
     };
 
@@ -209,48 +208,39 @@ const Payment: React.FC = () => {
             </Button>
           </Form.Item>
 
+          {/* ลบการบังคับให้ยอมรับเงื่อนไขในการชำระเงิน */}
           <Form.Item>
-            <Button type="primary" htmlType="submit" disabled={!isConditionAccepted || loading}>
+            <Button type="primary" htmlType="submit" disabled={loading}>
               ดำเนินการชำระเงิน
             </Button>
           </Form.Item>
         </Form>
+
+        <Modal visible={isModalVisible} onCancel={() => setIsModalVisible(false)} footer={null}>
+          <Title level={5}>QR Code สำหรับชำระเงิน</Title>
+          {qrCodeUrl && <img src={qrCodeUrl} alt="QR Code" />}
+          <Upload
+            fileList={fileList}
+            beforeUpload={beforeUpload}
+            onChange={onChange}
+            maxCount={1}
+          >
+            <Button icon={<PlusOutlined />}>อัปโหลดสลิปการโอนเงิน</Button>
+          </Upload>
+          <Button type="primary" onClick={handleUploadSlip} loading={loading}>
+            ยืนยันการชำระเงิน
+          </Button>
+        </Modal>
+
+        <Modal visible={isConditionModalVisible} onCancel={() => setIsConditionModalVisible(false)} footer={null}>
+          <Title level={5}>เงื่อนไขการคืนเงิน</Title>
+          <p>{conditionText}</p>
+        </Modal>
       </Card>
-
-      <Modal visible={isModalVisible} footer={null} onCancel={() => setIsModalVisible(false)}>
-        <Title level={4}>สแกน QR Code เพื่อชำระเงิน</Title>
-        <img src={qrCodeUrl} alt="QR Code" />
-        <Upload
-          listType="picture-card"
-          fileList={fileList}
-          onChange={onChange}
-          beforeUpload={beforeUpload}
-          maxCount={1}
-        >
-          {fileList.length < 1 && (
-            <div>
-              <PlusOutlined />
-              <div style={{ marginTop: 8 }}>อัปโหลดสลิปการชำระเงิน</div>
-            </div>
-          )}
-        </Upload>
-        <Button type="primary" onClick={handleUploadSlip} disabled={fileList.length === 0 || !isConditionAccepted || loading}>
-          ยืนยันการชำระเงิน
-        </Button>
-      </Modal>
-
-      <Modal
-        visible={isConditionModalVisible}
-        onCancel={() => setIsConditionModalVisible(false)}
-        footer={<Button onClick={() => setIsConditionModalVisible(false)}>ปิด</Button>}
-      >
-        <Title level={4}>เงื่อนไขการคืนเงิน</Title>
-        <p>{conditionText}</p>
-      </Modal>
     </div>
   );
 };
 
-const calculateAmount = (price: number, quantity: number) => price * quantity;
+const calculateAmount = (price: number, quantity: number): number => price * quantity;
 
 export default Payment;
