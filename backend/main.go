@@ -33,23 +33,23 @@ func main() {
 	router := r.Group("")
 	{
 		// Member Routes
-		router.POST("/login", controller.SignIn)
-		router.POST("/Member", controller.SignUp)
-		router.GET("/user/:id",controller.GetUser)
+		router.POST("/login", controller.SignIn)//ลงชื่อเข้า
+		router.POST("/Member", controller.SignUp)//สมัครสมาชิก
+		router.GET("/user/:id",controller.GetUser)//ดึงข้อมูลสมาชิก
+		
 		// Concert Routes
-		router.GET("/concerts", controller.ListConcerts)
-		router.GET("/seats/:id", controller.GetSeatsByConcertID)
-		router.GET("/seatTypes", controller.GetSeatTypes)
-		router.POST("/concerts/:id/seat", controller.SelectSeat)
-		router.POST("/payment", controller.CreatePayment)
-		router.POST("/ticket", controller.CreateTicket)
-		router.GET("/payment/:id", controller.GetPaymentsByMemberID) 
+		router.GET("/concerts", controller.ListConcerts)//ดึงข้อมูลคอนเสิร์ต
+		router.GET("/seats/:id", controller.GetSeatsByConcertID)//ดึงข้อมูลที่นั่งจากแต่ล่ะคอนเสิร์ต
+		router.GET("/seatTypes", controller.GetSeatTypes)//ดึงข้อมูลประเภทที่นั่ง
+		router.POST("/payment", controller.CreatePayment)//สร้างข้อมูลการจ่ายเงิน
+		router.POST("/ticket", controller.CreateTicket)//สร้างข้อมูลตั้ว
+		//router.GET("/payment/:id", controller.GetPaymentsByMemberID)
 		router.GET("/tickets/:id", controller.ListTicketsByPaymentID)
-		//router.GET("/Gettickets/:id", controller.ListTicketsByPaymentID)
 		router.GET("/tickets/payment/:id", controller.ListTicketsByPaymentID)
-		router.POST("/sendTicketEmail", controller.SendEmail)
-		//router.GET("/Condition",controller.ListCondition)
-		router.POST("/CreateCondition",controller.CreateConditionRefun)
+		router.POST("/sendTicketEmail", controller.SendEmail)//ส่งข้อมูลของตั้วที่ผู้ใช้ได้ทำการซื้อไปยังอีเมลของผู้ใช้
+		router.POST("/CreateCondition",controller.CreateConditionRefun)//สร้างการกดยอมรับเงื่อนไข/ไม่ยอมรับเงื่อนไข
+		
+		
 		//Refundrequest
 		router.GET("/refundrequest", controller.GetAllRefundrequest)
 		router.GET("/refundrequest/:id", controller.GetRefundrequestbyId)
@@ -57,6 +57,8 @@ func main() {
 		router.DELETE("/refundrequest/:id", controller.DeleteRefundrequest)
 		router.PUT("/refundrequest/:id",controller.UpdateRefundrequestByUserID)
 		router.PATCH("/refundrequest/:id",controller.UpdateRefundrequest)
+		
+		
 		//Refundapproval
 		router.GET("/refundapproval", controller.GetAllRefundApproval)
 		router.GET("/refundapproval/:id", controller.GetRefundapprovalbyId)

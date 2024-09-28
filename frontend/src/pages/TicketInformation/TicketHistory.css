@@ -1,0 +1,42 @@
+/* Container styling */
+.ticket-history-container {
+    padding: 100px;
+    max-height: 80vh;
+    overflow-y: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(45deg, #ff7e5f, #feb47b); /* Gradient background */
+    height: 100vh; /* Full screen height */
+  }
+  
+  /* Card styling */
+  .ticket-card {
+    margin-bottom: 16px;
+    max-width: 500px;
+    padding: 20px;
+    border-radius: 15px;
+    background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent background */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Shadow for emphasis */
+  }
+  
+  /* Button styling */
+  .refund-button {
+    margin-top: 16px;
+    background: linear-gradient(90deg, #ff6a00, #ee0979); /* Gradient button */
+    color: white;
+    border: none;
+    border-radius: 30px;
+    padding: 12px 24px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Button shadow */
+    transition: all 0.3s ease; /* Smooth transition */
+    cursor: pointer;
+  }
+  
+  /* Button hover effect */
+  .refund-button:hover {
+    background: linear-gradient(90deg, #ee0979, #ff6a00); /* Hover effect */
+    transform: scale(1.05); /* Slightly enlarge on hover */
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3); /* Shadow on hover */
+  }
+  

@@ -21,7 +21,6 @@ const Register: React.FC = () => {
             last_name: values.lastName.trim(),
             birthday: values.birthday ? values.birthday.format('YYYY-MM-DD') : '',
             PhoneNumber: values.phonenumber.trim(),
-            phone: undefined
         };
 
         setLoading(true);

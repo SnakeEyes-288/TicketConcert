@@ -5,6 +5,7 @@
     align-items: center;
     flex-direction: column;
     min-height: 100vh; /* ให้แน่ใจว่ากลางแนวตั้ง */
+    background: linear-gradient(45deg, #ff0000, #000000);
   }
   
   .payment-card {

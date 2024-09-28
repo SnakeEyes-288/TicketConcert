@@ -64,8 +64,10 @@ const ConcertSelection: React.FC = () => {
         </div>
       </div>
 
-      <Title level={2} className="concert-title">
-        เลือกคอนเสิร์ตที่คุณสนใจ
+      <Title level={2} >
+        <p style={{ color:'white'}}>
+          เลือกคอนเสิร์ตที่คุณสนใจ
+        </p>
       </Title>
 
       <div className="payment-history-btn">

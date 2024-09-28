@@ -1,5 +1,4 @@
 export interface MemberInterface {
-    phone: any;
     ID?: number;
     Username?: string;
     Password?: string;

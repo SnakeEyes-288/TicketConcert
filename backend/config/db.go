@@ -3,7 +3,6 @@ package config
 import (
 	"fmt"
 	"time"
-
 	"github.com/SnakeEyes-288/sa-67-example/entity"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -54,10 +53,10 @@ func SetupDatabase() {
 
 	// เพิ่มข้อมูลเริ่มต้นสำหรับ SeatType
 	seatTypes := []entity.SeatType{
-		{Name: "VIP", Price: 50, Description: "ที่นั่ง VIP ใกล้เวที"},
-		{Name: "Regular", Price: 20, Description: "ที่นั่งธรรมดา"},
-		{Name: "Premium", Price: 35, Description: "ที่นั่งระดับพรีเมียม"},
-		{Name: "Economy", Price: 10, Description: "ที่นั่งราคาประหยัด"},
+		{Name: "VIP", Price: 4000, Description: "ที่นั่ง VIP ใกล้เวที"},
+		{Name: "Regular", Price: 1200, Description: "ที่นั่งธรรมดา"},
+		{Name: "Premium", Price: 2000, Description: "ที่นั่งระดับพรีเมียม"},
+		{Name: "Economy", Price: 500, Description: "ที่นั่งราคาประหยัด"},
 	}
 
 	for i, seatType := range seatTypes {
@@ -66,10 +65,10 @@ func SetupDatabase() {
 
 	// เพิ่มข้อมูลเริ่มต้นสำหรับ Concert
 	concerts := []entity.Concert{
-		{Name: "Concert One", Date: time.Now().AddDate(0, 1, 0), Venue: "สยาม"},
-		{Name: "Concert Two", Date: time.Now().AddDate(0, 2, 0), Venue: "อิมแพ็คอารีน่า"},
-		{Name: "Concert Three", Date: time.Now().AddDate(0, 3, 0), Venue: "เซ็นทรัลเวิลด์"},
-		{Name: "Concert Four", Date: time.Now().AddDate(0, 4, 0), Venue: "สนามราชมังคลากีฬาสถาน"},
+		{Name: "WOOSUNG WORLD TOUR'B4 WE DIE' COMES TO BANGKOK", Date: time.Now().AddDate(0, 1, 0), Venue: "Voice Space"},
+		{Name: "Bangkok Bank M Visa Present The 1st Anniversary LegeMdary Concert", Date: time.Now().AddDate(0, 2, 0), Venue: "MCC HALL ชั้น 4, เดอะมอลล์ไลฟ์สโตร์ งามวงศ์วาน"},
+		{Name: "Aokhanom Festival Moon Lover", Date: time.Now().AddDate(0, 3, 0), Venue: "Hotel Villa Ao Khanom"},
+		{Name: "2024 (G)I-DLE WORLD TOUR [iDOL] IN BANGKOK", Date: time.Now().AddDate(0, 4, 0), Venue: "อิมแพ็ค อารีน่า เมืองทองธานี"},
 	}
 
 	for i, concert := range concerts {
@@ -101,11 +100,16 @@ func SetupDatabase() {
 		db.Create(&Refundapproval)
 	}
 
-	for _, concert := range concerts {
+	for _, concert := range concerts { 
 		for _, seatType := range seatTypes {
-			for i := 1; i <= 10; i++ { // สร้าง 10 ที่นั่งสำหรับแต่ละประเภทที่นั่ง
-				// seatNumber จะรวม ConcertID เพื่อให้มั่นใจว่า SeatNumber ไม่ซ้ำกันในแต่ละคอนเสิร์ต
-				seatNumber := fmt.Sprintf("%s%d-C%d", seatType.Name[0:1], i, concert.ID)
+			alphabet := "ABCDEFGHIJKLMNOPQRSTUVWXYZ" // ตัวอักษรภาษาอังกฤษ 26 ตัว
+			
+			for i := 0; i < 10; i++ { // สร้าง 10 ที่นั่งสำหรับแต่ละประเภทที่นั่ง
+				// ใช้ตัวอักษรจาก alphabet เพื่อลดความซ้ำกัน
+				letter := string(alphabet[i%len(alphabet)])  // เลือกตัวอักษรตามลำดับ A, B, C, ...
+				
+				// สร้างหมายเลขที่นั่งที่ไม่ซ้ำกันโดยไม่มี -C
+				seatNumber := fmt.Sprintf("%s%s-%d", seatType.Name[0:1], letter, i+1)
 			
 				seat := entity.Seat{
 					SeatNumber:  seatNumber,
@@ -113,7 +117,8 @@ func SetupDatabase() {
 					IsAvailable: true,
 					SeatTypeID:  &seatType.ID,     // กำหนด SeatTypeID
 				}
-			
+	
+				// บันทึกที่นั่งใหม่ลงในฐานข้อมูลหากไม่มีอยู่ก่อนหน้านี้
 				db.FirstOrCreate(&seat, &entity.Seat{SeatNumber: seatNumber, ConcertID: &concert.ID})
 			}
 		}

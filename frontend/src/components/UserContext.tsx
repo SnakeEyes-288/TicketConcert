@@ -31,7 +31,7 @@ const UserContextProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setUsername(memberData.Username); // ใช้ Username จาก API
             setEmail(memberData.Email); // ใช้ Email จาก API
             setImageUrl(memberData.imageUrl); // หากมีภาพโปรไฟล์ สามารถใช้ได้ที่นี่
-            setIPhone(memberData.phone);
+            setIPhone(memberData.PhoneNumber);
           }
         } catch (error) {
           console.error("Error fetching member data:", error);

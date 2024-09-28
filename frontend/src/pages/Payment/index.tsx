@@ -1,5 +1,5 @@
 import React, { useState } from 'react'; 
-import { Button, Modal, Typography, Form, Input, Select, Card, notification, Upload, Checkbox, Row, Col } from 'antd';
+import { Button, Modal, Typography, Form, Select, Card, notification, Upload, Checkbox, Row, Col } from 'antd';
 import { useLocation,useNavigate } from 'react-router-dom';
 import { PlusOutlined } from '@ant-design/icons';
 import { CreatePayment, CreateTicket, CreateConditionRefun, SendTicketEmail } from '../../services/https';
@@ -244,12 +244,6 @@ const Payment: React.FC = () => {
         </Row>
 
         <Form form={form} layout="vertical" onFinish={handlePayment} style={{ marginTop: '20px' }}>
-          <Form.Item label="ชื่อผู้ติดต่อ" name="contactName" rules={[{ required: true, message: 'กรุณากรอกชื่อผู้ติดต่อ' }]}>
-            <Input placeholder="ชื่อผู้ติดต่อ" />
-          </Form.Item>
-          <Form.Item label="อีเมลผู้ติดต่อ" name="contactEmail" rules={[{ required: true, message: 'กรุณากรอกอีเมลผู้ติดต่อ' }]}>
-            <Input type="email" placeholder="อีเมลผู้ติดต่อ" />
-          </Form.Item>
           <Form.Item label="วิธีการชำระเงิน" name="paymentMethod" rules={[{ required: true, message: 'กรุณาเลือกวิธีการชำระเงิน' }]}>
             <Select placeholder="เลือกวิธีการชำระเงิน" onChange={(value) => setPaymentMethod(value)}>
               <Option value="PromptPay">PromptPay</Option>

@@ -1,5 +1,3 @@
-/* index.css */
-
 /* ตั้งค่าพื้นหลังแบบเต็มหน้าจอสำหรับหน้าเลือกคอนเสิร์ต */
 .concert-selection-container {
   display: flex;
@@ -9,6 +7,7 @@
   padding: 20px;
   min-height: 100vh;
   background: linear-gradient(45deg, #ff0000, #000000);
+  overflow: hidden; /* ป้องกันไม่ให้ล้นหน้าจอ */
 }
 
 /* ตั้งค่าสำหรับหัวข้อ */
@@ -16,6 +15,9 @@
   text-align: center;
   margin-bottom: 40px;
   color: rgb(255, 255, 255);
+  max-width: 100%; /* จำกัดความกว้างเพื่อป้องกันการล้น */
+  overflow: hidden;
+  text-overflow: ellipsis; /* แสดง "..." ถ้าเนื้อหายาวเกิน */
 }
 
 /* การตั้งค่าสำหรับปุ่มประวัติการชำระเงิน */
@@ -35,6 +37,7 @@
   background: linear-gradient(90deg, #ff7e5f, #feb47b);
   transition: all 0.3s ease;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  max-width: 100%; /* ป้องกันไม่ให้ปุ่มล้น */
 }
 
 .right-button:hover {
@@ -47,14 +50,20 @@
 .concert-card {
   background: #ffffff;
   border-radius: 10px;
-  height: 100%;
+  height: auto; /* เปลี่ยนจาก fixed height เป็น auto */
+  width: 100%; /* ปรับให้การ์ดใช้ความกว้างเต็มที่ของ container */
+  max-width: 250px; /* กำหนดความกว้างสูงสุดของการ์ด */
+  margin-bottom: 20px; /* เพิ่มช่องว่างด้านล่างแต่ละการ์ด */
+  box-sizing: border-box; /* ป้องกันไม่ให้ padding ล้น */
+  overflow: hidden; /* ป้องกันเนื้อหาล้น */
 }
 
 /* รูปภาพในการ์ดคอนเสิร์ต */
 .concert-image {
   border-radius: 10px 10px 0 0;
-  height: 200px;
-  object-fit: cover;
+  height: 150px; /* ลดขนาดความสูงของรูปภาพ */
+  object-fit: cover; /* ให้รูปภาพถูกจัดให้พอดีกับพื้นที่ */
+  width: 100%;
 }
 
 /* Loading spinner */
@@ -64,6 +73,7 @@
   align-items: center;
   height: 100vh;
   background-color: rgba(255, 255, 255, 0.8);
+  overflow: hidden; /* ป้องกันล้น */
 }
 
 /* User info section */
@@ -74,24 +84,35 @@
   display: flex;
   justify-content: flex-end;
   align-items: center;
+  box-sizing: border-box; /* ทำให้ padding รวมอยู่ในขนาดทั้งหมด */
 }
 
 /* Concert list grid */
 .concert-list {
   width: 70%;
+  max-width: 100%; /* จำกัดความกว้างของรายการคอนเสิร์ต */
+  box-sizing: border-box;
+  overflow-y: auto; /* เพิ่ม scroll ในแนวตั้งถ้าล้น */
 }
 
 .profile-container {
   display: flex;
   align-items: center;
   margin-bottom: 20px; /* เพิ่มช่องว่างระหว่างโปรไฟล์กับเนื้อหาอื่น ๆ */
+  max-width: 100%; /* จำกัดความกว้าง */
 }
 
 .profile-info {
   margin-left: 10px; /* เพิ่มระยะห่างระหว่าง Avatar กับข้อความ */
+  max-width: 100%; /* ป้องกันการล้น */
+  overflow: hidden;
+  text-overflow: ellipsis; /* แสดง "..." ถ้าเนื้อหายาวเกิน */
 }
 
 .profile-username {
   font-size: 16px;
   font-weight: bold;
+  white-space: nowrap; /* ป้องกันการตัดคำ */
+  overflow: hidden;
+  text-overflow: ellipsis; /* แสดง "..." ถ้าเนื้อหายาวเกิน */
 }
