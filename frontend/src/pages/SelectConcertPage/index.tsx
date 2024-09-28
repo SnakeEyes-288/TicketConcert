@@ -92,12 +92,12 @@ const ConcertSelection: React.FC = () => {
                 cover={
                   <img
                     alt="concert"
-                    src={`https://via.placeholder.com/400x200.png?text=${concert.name}`}
+                    src={`https://via.placeholder.com/400x200.png?text=${concert.Name}`}
                     className="concert-image"
                   />
                 }
               >
-                <Title level={4}>{concert.name}</Title>
+                <Title level={4}>{concert.Name}</Title>
                 <p>
                   <Text strong>สถานที่:</Text> {concert.Venue}
                 </p>

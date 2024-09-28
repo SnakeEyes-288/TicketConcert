@@ -7,6 +7,7 @@ import { ConditionInterface } from "../../interfaces/ICondition";
 
 const apiUrl = "http://localhost:8000";
 
+
 // ฟังก์ชันสำหรับดึงค่า token และ token_type จาก localStorage
 const getAuthHeaders = () => {
   const token = localStorage.getItem("token");
@@ -172,8 +173,8 @@ async function CreateTicket(ticketData: TicketInterface) {
   return await res.json();
 }
 
-// ฟังก์ชันสำหรับดึงข้อมูลบัตรคอนเสิร์ต
-async function GetTicket( memberID: number ){
+// ฟังก์ชันสำหรับดึงข้อมูลบัตรคอนเสิร์ตจากสมาชิกคนนั้นๆ
+async function GetTicket( id: number ){
   const requestOptions = {
     method: "GET",
     headers: {
@@ -181,7 +182,7 @@ async function GetTicket( memberID: number ){
     },
   };
 
-  let res = await fetch(`${apiUrl}/tickets/member/${memberID}`, requestOptions)
+  let res = await fetch(`${apiUrl}/tickets/${id}`, requestOptions)
     .then((res) => {
       if (res.status === 200) {
         return res.json();
@@ -193,30 +194,38 @@ async function GetTicket( memberID: number ){
   return res;
 };
 
+// ฟังก์ชันสำหรับดึงข้อมูลบัตรคอนเสิร์ตจากสมาชิกคนนั้นๆ
+/*async function GetTicketByPaymentID( id: number ){
+  const requestOptions = {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  };
+
+  let res = await fetch(`${apiUrl}/tickets/payment/${id}`, requestOptions)
+    .then((res) => {
+      if (res.status === 200) {
+        return res.json();
+      } else {
+        return false;
+      }
+    });
+
+  return res;
+};*/
+
 // ฟังก์ชันสำหรับส่งอีเมลบัตรคอนเสิร์ต
-async function SendTicketEmail(data?: {    
-  memberID?: number, // ทำให้ optional เพื่อให้กำหนดค่าเริ่มต้นได้
+/*async function SendTicketEmail(data?: {    
+  paymentID?: number, // ทำให้ optional เพื่อให้กำหนดค่าเริ่มต้นได้
   To?: string, 
   concertName?: string, 
-  qrCode?: string, 
   seats?: string[], 
   amount?: number 
 }): Promise<boolean> {
   const token = "your-auth-token"; // ควรใช้การดึง token จริงจากการจัดเก็บ
   //const apiUrl = "http://your-api-url.com"; // ตั้งค่า URL ของ API จริง
-
-  // กำหนดค่าเริ่มต้นหากไม่ได้ส่งข้อมูลมา
-  const defaultData = {
-    memberID: 1, 
-    To: "b6512194@g.sut.ac.th", 
-    concertName: "Test Concert", 
-    qrCode: "default_qr_code", 
-    seats: ["P10-C3", "P9-C3"], 
-    amount: 70
-  };
-
-  // ถ้า data ไม่มีค่า ให้ใช้ defaultData
-  const requestData = data || defaultData;
+  const requestData = data ;
 
   try {
     const response = await axios.post(
@@ -245,7 +254,74 @@ async function SendTicketEmail(data?: {
     }
     return false;
   }
+}*/
+
+async function SendTicketEmail(ticketIDs: number[]): Promise<boolean[]> {
+  const token = "your-auth-token"; // ควรใช้การดึง token จริงจากการจัดเก็บ
+  const results: boolean[] = []; // สร้างอาร์เรย์เพื่อเก็บผลลัพธ์
+
+  for (const ticketID of ticketIDs) {
+    try {
+      const ticketResponse = await GetTicketByID(ticketID);
+      const ticketData = ticketResponse.data;
+
+      // ตรวจสอบว่าค่า ticketData เป็นอาร์เรย์หรือไม่ ถ้าไม่ใช่ให้แปลงเป็นอาร์เรย์
+      if (!Array.isArray(ticketData)) {
+        console.error(`ticketData is not iterable for ticket ID ${ticketID}`);
+        results.push(false);
+        continue; // ข้ามไปที่ ticketID ถัดไป
+      }
+
+      for (const ticket of ticketData) {
+        // ตรวจสอบว่า ticket และ ticket.Seat มีข้อมูล และตรวจสอบว่าอีเมลถูกส่งไปแล้วหรือไม่
+        if (!ticket || !ticket.Seat) {
+          console.error(`Seat data is missing for ticket ID ${ticketID}`);
+          results.push(false);
+          continue;
+        }
+
+        if (ticket.EmailSent) {
+          console.log(`Email already sent for ticket ID ${ticketID}`);
+          results.push(true); // ข้ามการส่งอีเมลซ้ำ
+          continue;
+        }
+
+        const requestData = {
+          Subject: ticket.Seat.Concert?.Name,
+          PaymentID: ticket.PaymentID,
+          To: ticket.Member?.Email,
+          Venue: ticket.Seat.Concert?.Venue,
+          Seat: ticket.Seat.SeatNumber,
+          Amount: ticket.Price,
+        };
+
+        const response = await axios.post(
+          `${apiUrl}/sendTicketEmail`,
+          requestData,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        if (response.status === 200) {
+          console.log(`Email sent successfully for ticket ID ${ticketID}`);
+
+          // อัปเดตสถานะ EmailSent ภายในตัวแปร ticket เองทันที โดยไม่ต้องสร้างฟังก์ชันเพิ่ม
+          ticket.EmailSent = true; 
+
+          results.push(true);
+        } else {
+          console.error(`Error during email sending for ticket ID ${ticketID}:`, response.statusText);
+          results.push(false);
+        }
+      }
+    } catch (error: any) {
+      console.error(`Error processing ticket ID ${ticketID}:`, error);
+      results.push(false);
+    }
+  }
+
+  return results; // ส่งคืนอาร์เรย์ผลลัพธ์
 }
+
 
 
 // ฟังก์ชันสำหรับดึงข้อมูลประเภทที่นั่งคอนเสิร์ต
@@ -391,6 +467,30 @@ async function submitRefundRequest(values: any, ticket: any){
   }
 
 }
+
+async function GetTicketByID(ticketID: number) {
+  const requestOptions = {
+      method: "GET",
+      headers: {
+          "Content-Type": "application/json",
+      },
+  };
+
+  //const apiUrl = "http://your-api-url.com"; // ตั้งค่า URL ของ API จริง
+
+  // ดึงข้อมูลตั๋วพร้อมข้อมูลที่เชื่อมโยง
+  const res = await fetch(`${apiUrl}/tickets/${ticketID}`, requestOptions)
+      .then((res) => {
+          if (res.status === 200) {
+              return res.json();
+          } else {
+              return false;
+          }
+      });
+
+  return res;
+}
+
 
 export {
   GetMember,

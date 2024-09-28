@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"crypto/tls"
 	"fmt"
 	"net/http"
 
@@ -82,9 +83,10 @@ func DeleteSms(c *gin.Context) {
     //    return err
     //}
     //return nil
+    //ofcaklsvdrucvjjk
 //}
 
-func SendEmail(c *gin.Context) {
+func SendEmail(c *gin.Context) {  
     token := c.GetHeader("Authorization")
     if token == "" {
         c.JSON(http.StatusUnauthorized, gin.H{"error": "Token is missing"})
@@ -92,14 +94,13 @@ func SendEmail(c *gin.Context) {
     }
 
     var data struct {
-        To          string   `json:"to"`
-        Subject     string   `json:"subject"`
-        Body        string   `json:"body"`
-        MemberID    int      `json:"memberID"`
-        ConcertName string   `json:"concertName"`
-        QRCode      string   `json:"qrCode"` // ต้องเป็น Base64
-        Seats       []string `json:"seats"`
-        Amount      int      `json:"amount"`
+        To        string  `json:"To"`
+        Subject   string  `json:"Subject"`
+        Body      string  `json:"Body"`
+        PaymentID int     `json:"PaymentID"`
+        Venue     string  `json:"Venue"`
+        Seat      string  `json:"Seat"`
+        Amount    float64 `json:"Amount"`
     }
 
     if err := c.ShouldBindJSON(&data); err != nil {
@@ -113,10 +114,10 @@ func SendEmail(c *gin.Context) {
     }
 
     from := "wichitchai63@gmail.com"
-    password := "ofcaklsvdrucvjjk"
+    password := "leewnwxjyapaoiwi" // แทนที่ด้วยรหัสผ่านจริง
 
     smtpHost := "smtp.gmail.com"
-    smtpPort := 465
+    smtpPort := 587 // เปลี่ยนไปใช้พอร์ต 587 สำหรับการเชื่อมต่อแบบ TLS
 
     // สร้าง message โดยใช้ gomail
     m := gomail.NewMessage()
@@ -124,28 +125,22 @@ func SendEmail(c *gin.Context) {
     m.SetHeader("To", data.To)
     m.SetHeader("Subject", data.Subject)
 
-    // ตรวจสอบว่า QRCode ถูกส่งมาเป็น Base64 แล้วหรือยัง
-    if data.QRCode == "" {
-        c.JSON(http.StatusBadRequest, gin.H{"error": "QR Code is missing"})
-        return
-    }
-
-    // สร้างเนื้อหาของอีเมลที่แสดงรูป QR Code
+    // สร้างเนื้อหาของอีเมล
     body := fmt.Sprintf(`
         <h1>Ticket Confirmation</h1>
-        <p>Concert: %s</p>
-        <p>Seats: %v</p>
-        <p>Amount: %d</p>
-        <p><img src="data:image/png;base64,%s" alt="QR Code" /></p>
-        <p>Member ID: %d</p>
-    `, data.ConcertName, data.Seats, data.Amount, data.QRCode, data.MemberID)
+        <p>หมายเลขคำสั่งซื้อที่: %d</p>
+        <p>ที่นั่ง: %s</p>
+        <p>สถานที่การแสดง: %s</p>
+        <p>ราคาบัตร: %.2f บาท</p>`,
+        data.PaymentID, data.Seat, data.Venue, data.Amount)
 
     m.SetBody("text/html", body)
 
-    // ส่งอีเมล
+    // สร้าง dialer สำหรับส่งอีเมล
     d := gomail.NewDialer(smtpHost, smtpPort, from, password)
-    d.SSL = true
+    d.TLSConfig = &tls.Config{InsecureSkipVerify: true} // การตั้งค่า TLS
 
+    // ส่งอีเมล
     if err := d.DialAndSend(m); err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{
             "error": fmt.Sprintf("Failed to send email: %v", err),
@@ -155,6 +150,7 @@ func SendEmail(c *gin.Context) {
 
     c.JSON(http.StatusOK, gin.H{"status": "Email sent successfully"})
 }
+
 
 
 

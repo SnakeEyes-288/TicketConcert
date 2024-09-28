@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-
 	"github.com/SnakeEyes-288/sa-67-example/config"
 	"github.com/SnakeEyes-288/sa-67-example/entity"
 	"github.com/gin-gonic/gin"
@@ -120,27 +119,86 @@ func DeleteTicket(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Ticket deleted successfully"})
 }
 
-func ListTicketsByMemberID(c *gin.Context) {
+func ListTicketsByMemberID(c *gin.Context) { 
     var tickets []entity.Ticket
-    memberID := c.Param("memberID")
-    //log.Printf("Fetching tickets for memberID: %s", memberID) // เพิ่ม log นี้
-
+    memberID := c.Param("id")
+    
     db := config.DB()
 
-    // ดึงข้อมูลตั๋วที่มี MemberID ตรงกับที่ส่งเข้ามา
-	if err := db.Preload("Seat.SeatType").Preload("Payment").Where("member_id = ?", memberID).Find(&tickets).Error; err != nil {
-    	log.Printf("Database error: %v", err) // log ข้อผิดพลาด
+    // ดึงข้อมูลตั๋วที่มี id ตรงกับที่ส่งเข้ามา
+	if err := db.Preload("Seat.SeatType").Preload("Seat.Concert").
+            Preload("Payment").Preload("Payment.ConditionRefun").
+            Preload("Member").Where("member_id = ?", memberID).
+            Find(&tickets).Error; err != nil {
+        
+        // แสดง error log เมื่อดึงข้อมูลจากฐานข้อมูลล้มเหลว
+        log.Printf("Database error: %v", err)
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to retrieve tickets"})
+        return
+	}
+
+    // ตรวจสอบว่ามีข้อมูลหรือไม่
+    if len(tickets) == 0 {
+        log.Println("No tickets found for the member") 
+        c.JSON(http.StatusNotFound, gin.H{"message": "No tickets found for the member"})
+        return
+    }
+
+    // ส่งข้อมูลออกเป็น JSON
+    c.JSON(http.StatusOK, gin.H{"data": tickets})
+}
+
+func ListTicketsByPaymentID(c *gin.Context) {  
+    var tickets []entity.Ticket
+
+    // รับค่า paymentID จาก path parameter
+    paymentID := c.Param("id")
+	log.Printf("Searching for tickets with payment ID: %s", paymentID)
+    // เชื่อมต่อฐานข้อมูล
+    db := config.DB()
+
+    // ดึงข้อมูลตั๋วที่มี payment_id ตรงกับที่ส่งเข้ามา
+	if err := db.Preload("Seat.SeatType").
+           	Preload("Seat.Concert").
+           	Preload("Payment").
+           	Preload("Member").
+           	Where("tickets.payment_id = ?", paymentID).
+           	Find(&tickets).Error; err != nil {
+    	log.Printf("Database error: %v", err)
     	c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to retrieve tickets"})
     	return
 	}
 
 
-    // ตรวจสอบว่ามีข้อมูลหรือไม่
-    if len(tickets) == 0 {
-        log.Println("No tickets found for the member") // log ข้อความนี้
-        c.JSON(http.StatusNotFound, gin.H{"message": "No tickets found for the member"})
+    // ส่งข้อมูลออกเป็น JSON
+    c.JSON(http.StatusOK, gin.H{"data": tickets})
+
+}
+
+func GetTicketByID(c *gin.Context) {
+    var ticket entity.Ticket // สร้างตัวแปร ticket เพื่อเก็บข้อมูล
+
+    ticketID := c.Param("id") // รับค่า ticket ID จาก URL
+
+    // เชื่อมต่อฐานข้อมูล
+    db := config.DB()
+
+    // ดึงข้อมูลตามคำสั่ง SQL ที่ต้องการ
+    err := db.Preload("Seat.Concert").
+    Preload("Seat.SeatType").
+    Preload("Member").
+    Preload("Payment.ConditionRefun").
+    Where("tickets.id = ?", ticketID).
+    First(&ticket).Error
+
+
+    // ตรวจสอบความผิดพลาด
+    if err != nil {
+        log.Printf("Database error: %v", err)
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to retrieve ticket"})
         return
     }
 
-    c.JSON(http.StatusOK, gin.H{"data": tickets})
+    // ส่งข้อมูลออกเป็น JSON
+    c.JSON(http.StatusOK, gin.H{"data": ticket})
 }

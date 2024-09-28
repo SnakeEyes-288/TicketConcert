@@ -112,12 +112,12 @@ const SeatSelection: React.FC = () => {
         const ticketPrice = selectedSeatDetails?.SeatTypePrice || 0;
         const selectedSeatTypeName = selectedSeatDetails?.SeatTypeName || 'ไม่ทราบ';
 
-        console.log('Selected Seat Type:', selectedSeatTypeName);
+        //console.log('Selected Seat Type:', selectedSeatTypeName);
     
         navigate('/payment', {
             state: {
+              selectedConcert: selectedConcert?.name,    
               selectedSeats,
-              selectedConcert: selectedConcert?.name,
               selectedSeatType: selectedSeatTypeName,
               ticketQuantity,
               ticketPrice,

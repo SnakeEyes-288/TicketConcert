@@ -1,21 +1,21 @@
 import React, { useState } from 'react'; 
 import { Button, Modal, Typography, Form, Input, Select, Card, notification, Upload, Checkbox, Row, Col } from 'antd';
-import { useLocation } from 'react-router-dom';
+import { useLocation,useNavigate } from 'react-router-dom';
 import { PlusOutlined } from '@ant-design/icons';
 import { CreatePayment, CreateTicket, CreateConditionRefun, SendTicketEmail } from '../../services/https';
 import { useUser } from '../../components/UserContext';
 import promptpay from 'promptpay-qr';
 import * as qrcode from 'qrcode';
 import { UploadFile } from 'antd';
-import { TicketInterface } from '../../interfaces/ITicket';
 import './Payment.css';
+import { TicketInterface } from '../../interfaces/ITicket';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
 
-
 const Payment: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate(); // เรียกใช้ useNavigate
   const { selectedConcert = '', selectedSeats = [], selectedSeatType = '', ticketQuantity = 1, ticketPrice = 0, seatTypeID = 0 } = location.state || {};
   const { memberID } = useUser();
   const [form] = Form.useForm();
@@ -24,6 +24,8 @@ const Payment: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   const [fileList, setFileList] = useState<UploadFile[]>([]);
+  const [isConditionAccepted, setIsConditionAccepted] = useState(false);
+  const [isConditionModalVisible, setIsConditionModalVisible] = useState(false);
   const conditionText = (
     <>
       <h2>เงื่อนไขการซื้อบัตรคอนเสิร์ต</h2>
@@ -45,9 +47,7 @@ const Payment: React.FC = () => {
       </p>
     </>
   );
-  
-  const [isConditionAccepted, setIsConditionAccepted] = useState(false);
-  const [isConditionModalVisible, setIsConditionModalVisible] = useState(false);
+
 
   const amount = calculateAmount(ticketPrice, ticketQuantity);
 
@@ -66,7 +66,7 @@ const Payment: React.FC = () => {
 
   const handleUploadSlip = async () => {
     setLoading(true);
-
+  
     if (!fileList || fileList.length === 0) {
       notification.error({
         message: 'เกิดข้อผิดพลาด',
@@ -75,9 +75,9 @@ const Payment: React.FC = () => {
       setLoading(false);
       return;
     }
-
+  
     const file = fileList[0]?.originFileObj;
-
+  
     if (!(file instanceof Blob)) {
       notification.error({
         message: 'เกิดข้อผิดพลาด',
@@ -86,9 +86,9 @@ const Payment: React.FC = () => {
       setLoading(false);
       return;
     }
-
+  
     let slipImage = '';
-
+  
     try {
       slipImage = await getBase64(file);
     } catch (error) {
@@ -109,19 +109,18 @@ const Payment: React.FC = () => {
     การใช้บัตร: ข้าพเจ้าตกลงที่จะใช้บัตรคอนเสิร์ตตามวันที่ เวลา และสถานที่ที่กำหนดเท่านั้น และจะไม่ใช้บัตรเพื่อการซื้อขายต่อในลักษณะที่ผิดกฎหมาย
     การเข้าชมงาน: ข้าพเจ้าเข้าใจว่าการเข้าชมงานคอนเสิร์ตจะต้องปฏิบัติตามกฎระเบียบของสถานที่จัดงาน และยอมรับความเสี่ยงใดๆ ที่อาจเกิดขึ้นในระหว่างการเข้าร่วมงาน`;
     };
-    
-    // การเรียกใช้งานฟังก์ชัน
+  
     const conditionText = getConditionText();
     
     const conditionRefunData = {
       AcceptedTerms: isConditionAccepted,
       Description: conditionText,
     };
-
+  
     try {
       const conditionRes = await CreateConditionRefun(conditionRefunData);
       const conditionRefunID = conditionRes?.data?.ID;
-
+  
       const paymentData = {
         PaymentMethod: paymentMethod,
         PaymentDate: new Date().toISOString(),
@@ -131,12 +130,13 @@ const Payment: React.FC = () => {
         SlipImage: slipImage,
         ConditionRefunID: conditionRefunID,
       };
-
+  
       const paymentRes = await CreatePayment({ payment: paymentData, tickets: [] });
-
+  
       if (paymentRes && paymentRes.data && paymentRes.data.ID) {
         const paymentID = paymentRes.data.ID;
-        const ticketDataArray: TicketInterface[] = selectedSeats.map((seat: string) => ({
+  
+        const ticketDataArray = selectedSeats.map((seat: string) => ({
           Price: ticketPrice,
           PurchaseDate: new Date().toISOString(),
           Seat: { SeatNumber: seat },
@@ -144,30 +144,40 @@ const Payment: React.FC = () => {
           PaymentID: paymentID,
           MemberID: typeof memberID === 'number' ? memberID : Number(memberID),
         }));
+  
+        const ticketIDs: number[] = [];
+  
+        await Promise.all(
+          ticketDataArray.map(async (ticketData : TicketInterface) => {
+            try {
+              const ticketRes = await CreateTicket(ticketData);
+  
+              if (ticketRes && ticketRes.data && ticketRes.data.ID) {
+                ticketIDs.push(ticketRes.data.ID);
+              } else {
+                console.error('ไม่สามารถดึง ID จากการสร้างตั๋วได้');
+              }
+            } catch (error) {
+              console.error('เกิดข้อผิดพลาดในการสร้างตั๋ว:', error);
+            }
+          })
+        );
+  
+        if (ticketIDs.length > 0) {
+          try {
+            await SendTicketEmail(ticketIDs);
+            notification.success({
+              message: 'การชำระเงินสำเร็จ',
+              description: 'ส่งข้อมูลตั๋วไปยังอีเมลของคุณเรียบร้อยแล้ว',
+            });
 
-        await Promise.all(ticketDataArray.map((ticketData: TicketInterface) => CreateTicket(ticketData)));
-
-        const qrCodeDataUrl = await qrcode.toDataURL(promptpay("1459901028579", { amount }));
-        setQrCodeUrl(qrCodeDataUrl);
-
-        const emailSent = await SendTicketEmail({
-          memberID: typeof memberID === 'number' ? memberID : Number(memberID),
-          To: form.getFieldValue('contactEmail'),
-          concertName: selectedConcert,
-          seats: selectedSeats,
-          amount: amount,
-        });
-
-        if (emailSent) {
-          notification.success({
-            message: 'การชำระเงินสำเร็จ',
-            description: 'ส่งข้อมูลตั๋วไปยังอีเมลของคุณเรียบร้อยแล้ว',
-          });
-        } else {
-          notification.error({
-            message: 'เกิดข้อผิดพลาดในการส่งอีเมล',
-            description: 'ไม่สามารถส่งข้อมูลตั๋วไปยังอีเมลได้',
-          });
+            navigate('/concerts');
+          } catch (error) {
+            notification.error({
+              message: 'เกิดข้อผิดพลาดในการส่งอีเมล',
+              description: 'ไม่สามารถส่งอีเมลได้',
+            });
+          }
         }
       } else {
         notification.error({
@@ -185,6 +195,7 @@ const Payment: React.FC = () => {
       setIsModalVisible(false);
     }
   };
+  
 
   const beforeUpload = (file: File) => {
     const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png';

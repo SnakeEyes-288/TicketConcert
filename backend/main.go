@@ -43,10 +43,12 @@ func main() {
 		router.POST("/concerts/:id/seat", controller.SelectSeat)
 		router.POST("/payment", controller.CreatePayment)
 		router.POST("/ticket", controller.CreateTicket)
-		router.GET("/payment/:id", controller.GetPaymentsByMemberID) // เส้นทางสำหรับดึงข้อมูลการชำระเงินของสมาชิก
-		router.GET("/tickets/member/:memberID", controller.ListTicketsByMemberID)
-		router.POST("/sendTicketEmail", controller.SendEmail)// เปลี่ยนการเรียกใช้งาน SendEmail ให้ถูกต้อง
-		router.GET("/Condition",controller.ListCondition)
+		router.GET("/payment/:id", controller.GetPaymentsByMemberID) 
+		router.GET("/tickets/:id", controller.ListTicketsByPaymentID)
+		//router.GET("/Gettickets/:id", controller.ListTicketsByPaymentID)
+		router.GET("/tickets/payment/:id", controller.ListTicketsByPaymentID)
+		router.POST("/sendTicketEmail", controller.SendEmail)
+		//router.GET("/Condition",controller.ListCondition)
 		router.POST("/CreateCondition",controller.CreateConditionRefun)
 		router.POST("/refund-request",controller.RefundRequest)
 	}

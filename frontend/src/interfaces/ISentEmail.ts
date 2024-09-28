@@ -1,7 +1,7 @@
 export interface SentEmailInterface {
     email?: string;
     concertName?: string;
-    qrCode?: string;
+    paymentID?: string;
     seats?: string; 
     amount?: number; 
 }

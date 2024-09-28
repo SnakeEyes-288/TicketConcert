@@ -1,6 +1,6 @@
 export interface ConcertInterface{
     ID?: number;
-    name?: string;
+    Name?: string;
     Date?: string;
     Venue?: string;
   }

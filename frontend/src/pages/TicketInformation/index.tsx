@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';  
+import React, { useState, useEffect } from 'react';   
 import { List, Spin, Alert, Card, Typography, Button } from 'antd';
 import { useUser } from '../../components/UserContext'; // ดึงข้อมูลจาก UserContext
 import { GetTicket } from '../../services/https'; // นำเข้าฟังก์ชัน GetTicket
@@ -6,7 +6,6 @@ import { PaymentInterface } from '../../interfaces/IPayment';
 import { SeatandTypeInterface } from '../../interfaces/ISeatandType';
 import { useNavigate } from 'react-router-dom'; // นำเข้า useNavigate
 
-// ประกาศ Interface ของ Ticket
 interface TicketInterface {
   Price?: number;
   PurchaseDate?: string;
@@ -21,14 +20,15 @@ const TicketHistory: React.FC = () => {
   const [ticketData, setTicketData] = useState<TicketInterface[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const id = memberID ;
   const navigate = useNavigate(); // สร้างตัวแปร navigate
 
   useEffect(() => {
     const fetchTicketData = async () => {
-      if (memberID) {
+      if (id) {
         try {
-          const data = await GetTicket(parseInt(memberID)); // แปลง memberID จาก string เป็น number
-          if (data && data.data) {
+          const data = await GetTicket(parseInt(id)); // แปลง memberID จาก string เป็น number
+          if (data?.data) {
             setTicketData(data.data); // ตั้งค่าจาก data.data
           } else {
             setError('ไม่พบข้อมูลตั๋ว');
@@ -43,7 +43,7 @@ const TicketHistory: React.FC = () => {
     };
 
     fetchTicketData();
-  }, [memberID]);
+  }, [id]);
 
   if (loading) {
     return (
@@ -57,9 +57,10 @@ const TicketHistory: React.FC = () => {
     return <Alert message={error} type="error" style={{ textAlign: 'center', marginTop: '100px' }} />;
   }
 
-  // ฟังก์ชันสำหรับนำทางไปที่ RefundRequest พร้อมข้อมูลตั๋ว
   const handleRefundRequest = (ticket: TicketInterface) => {
-    navigate("/refund-request", { state: { ticket } }); // ส่งข้อมูลตั๋วไปใน state
+    if (ticket) {
+      navigate("/refund-request", { state: { ticket } }); // ส่งข้อมูลตั๋วไปใน state
+    }
   };
 
   return (
@@ -71,9 +72,10 @@ const TicketHistory: React.FC = () => {
         renderItem={(item: TicketInterface) => (
           <List.Item>
             <Card style={{ marginBottom: '16px', maxWidth: '100%' }}> {/* ปรับขนาด card */}
+              <Text strong>ชื่อคอนเสิร์ต:</Text> {item.Seat?.Concert?.Name || 'ไม่ระบุ'}<br />
               <Text strong>หมายเลขที่นั่ง:</Text> {item.Seat?.SeatNumber || 'ไม่ระบุ'}<br />
               <Text strong>ราคาตั๋ว:</Text> {item.Price} บาท<br />
-              <Text strong>วันที่ซื้อ:</Text> {item.PurchaseDate ? new Date(item.PurchaseDate).toLocaleString() : 'ไม่ระบุ'}<br />
+              <Text strong>วันที่และเวลาที่ซื้อ:</Text> {item.PurchaseDate ? new Date(item.PurchaseDate).toLocaleString() : 'ไม่ระบุ'}<br />
               <Text strong>สถานะการชำระเงิน:</Text> {item.Payment?.Status || 'ไม่ระบุ'}<br />
               <Text strong>วิธีการชำระเงิน:</Text> {item.Payment?.PaymentMethod || 'ไม่ระบุ'}<br />
               <Text strong>ประเภทที่นั่ง:</Text> 
