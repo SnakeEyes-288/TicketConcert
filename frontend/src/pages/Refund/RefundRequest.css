@@ -1,137 +1,133 @@
 /* Refund request container for full screen */
 .refund-request-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh; /* Full height */
-    width: 100vw; /* Full width */
-    background: linear-gradient(45deg, #ff0000, #000000);
-    padding: 0; /* Remove padding to make it fully cover */
-    box-sizing: border-box;
-  }
-  
-  /* Refund form styling */
-  .request-card-form {
-    width: 100%;
-    max-width: 500px; /* Maximum width for the form */
-    padding: 40px; /* Adjusted padding for better spacing */
-    border-radius: 15px;
-  }
-  
-  /* Header styling */
-  .request-card-form h1 {
-    color: rgb(255, 255, 255); /* Text color */
-    text-align: center;
-    margin-bottom: 30px; /* Increased margin for better spacing */
-  }
-  
-  /* Form item styling */
-  .ant-form-item {
-    margin-bottom: 20px; /* Space between form items */
-  }
-  
-  .ant-form-item-label {
-    font-weight: bold; /* Bold label text */
-  }
-  
-  /* Input and Textarea styling */
-  .ant-input,
-  .ant-input-textarea {
-    width: 100%; /* Make textbox full width */
-    background-color: rgba(255, 255, 255, 0.8); /* Background color */
-    color: rgb(0, 0, 0);
-    border: 2px solid rgba(0, 0, 0, 0.2); /* Border color */
-    border-radius: 5px; /* Rounded corners */
-    padding: 10px; /* Padding inside the input */
-    box-sizing: border-box; /* Include padding and border in width */
-    transition: border-color 0.3s; /* Smooth transition for border color */
-  }
-  
-  .ant-input::placeholder,
-  .ant-input-textarea::placeholder {
-    color: rgb(150, 150, 150); /* Placeholder color */
-  }
-  
-  /* Focus effect */
-  .ant-input:focus,
-  .ant-input-textarea:focus {
-    border-color: #007bff; /* Change border color on focus */
-    outline: none; /* Remove outline */
-  }
-  
-  /* Button styles */
-  .form-buttons {
-    display: flex;
-    justify-content: space-between; /* Align buttons to both ends */
-    margin-top: 20px; /* Add space above buttons */
-  }
-  
- /* ปุ่มพื้นฐาน */
+  display: flex; /* ใช้ Flexbox สำหรับจัดการ layout */
+  justify-content: center; /* จัดให้อยู่ตรงกลางแนวนอน */
+  align-items: center; /* จัดให้อยู่ตรงกลางแนวตั้ง */
+  height: 100vh; /* กำหนดความสูงเต็มหน้าจอ */
+  width: 100vw; /* กำหนดความกว้างเต็มหน้าจอ */
+  background: linear-gradient(45deg, #ff0000, #000000); /* พื้นหลังเป็นสีไล่ระดับจากแดงไปดำ */
+  padding: 0; /* ลบระยะห่างภายใน container */
+  box-sizing: border-box; /* คำนวณขนาดรวมถึง padding และ border */
+}
+
+/* Refund form styling */
+.request-card-form {
+  width: 100%; /* ความกว้างเต็มที่ */
+  max-width: 500px; /* ความกว้างสูงสุดของฟอร์ม */
+  padding: 40px; /* ระยะห่างภายในฟอร์ม */
+  border-radius: 15px; /* มุมฟอร์มโค้งมน */
+}
+
+/* Header styling */
+.request-card-form h1 {
+  color: rgb(255, 255, 255); /* สีตัวอักษรของหัวเรื่องเป็นสีขาว */
+  text-align: center; /* จัดตัวอักษรให้อยู่ตรงกลาง */
+  margin-bottom: 30px; /* ระยะห่างด้านล่างของหัวเรื่อง */
+}
+
+/* Form item styling */
+.ant-form-item {
+  margin-bottom: 20px; /* ระยะห่างระหว่างฟิลด์ในฟอร์ม */
+}
+
+.ant-form-item-label {
+  font-weight: bold; /* ตัวอักษรหนาสำหรับป้ายฟิลด์ */
+}
+
+/* Input and Textarea styling */
+.ant-input,
+.ant-input-textarea {
+  width: 100%; /* ความกว้างเต็มที่ */
+  background-color: rgba(255, 255, 255, 0.8); /* สีพื้นหลังโปร่งใสเล็กน้อย */
+  color: rgb(0, 0, 0); /* สีตัวอักษรเป็นสีดำ */
+  border: 2px solid rgba(0, 0, 0, 0.2); /* ขอบสีดำบาง */
+  border-radius: 5px; /* ขอบมุมโค้งมน */
+  padding: 10px; /* ระยะห่างภายใน input */
+  box-sizing: border-box; /* คำนวณขนาดรวมถึง padding และ border */
+  transition: border-color 0.3s; /* เพิ่มการเปลี่ยนสีขอบเมื่อโฟกัส */
+}
+
+.ant-input::placeholder,
+.ant-input-textarea::placeholder {
+  color: rgb(150, 150, 150); /* สีข้อความที่อยู่ใน input */
+}
+
+/* Focus effect */
+.ant-input:focus,
+.ant-input-textarea:focus {
+  border-color: #007bff; /* เปลี่ยนสีขอบเมื่อโฟกัส */
+  outline: none; /* ลบเส้นขอบเมื่อโฟกัส */
+}
+
+/* Button styles */
+.form-buttons {
+  display: flex; /* จัด layout ปุ่มแบบ flex */
+  justify-content: space-between; /* จัดปุ่มให้อยู่ปลายทั้งสองด้าน */
+  margin-top: 20px; /* เพิ่มระยะห่างด้านบนปุ่ม */
+}
+
+/* ปุ่มพื้นฐาน */
 .left-button,
 .right-button {
-  padding: 12px 24px; /* เพิ่ม padding ให้เหมาะสม */
-  font-size: 1rem; /* ลดขนาดตัวอักษรลงเล็กน้อย */
-  border-radius: 30px; /* เพิ่มความโค้งมน */
-  border: none; /* ลบขอบเส้น */
-  cursor: pointer;
-  color: white; /* สีตัวอักษร */
-  background: linear-gradient(90deg, #ff7e5f, #feb47b); /* เพิ่มสีไล่ระดับ */
-  transition: all 0.3s ease; /* เพิ่ม transition */
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* เพิ่มเงา */
-  min-width: 150px; /* กำหนดความกว้างขั้นต่ำเพื่อให้ปุ่มไม่เล็กเกินไป */
+padding: 12px 24px; /* ระยะห่างภายในปุ่ม */
+font-size: 1rem; /* ขนาดตัวอักษร */
+border-radius: 30px; /* ทำมุมปุ่มให้โค้งมน */
+border: none; /* ลบขอบของปุ่ม */
+cursor: pointer; /* เปลี่ยนเม้าส์เป็น pointer เมื่อ hover */
+color: white; /* สีตัวอักษรเป็นสีขาว */
+background: linear-gradient(90deg, #ff7e5f, #feb47b); /* สีไล่ระดับของปุ่มจากสีส้มไปเหลือง */
+transition: all 0.3s ease; /* การเปลี่ยนแปลงของปุ่มจะค่อยๆ เปลี่ยนใน 0.3 วินาที */
+box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* เพิ่มเงาให้ปุ่ม */
+min-width: 150px; /* ความกว้างขั้นต่ำของปุ่ม */
 }
 
 /* Hover effect */
 .left-button:hover,
 .right-button:hover {
-  background: linear-gradient(90deg, #feb47b, #ff7e5f); /* เปลี่ยนทิศทางสีไล่ระดับ */
-  transform: scale(1.05); /* เพิ่มขนาดเล็กน้อยเมื่อ hover */
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3); /* เพิ่มเงาเมื่อ hover */
+background: linear-gradient(90deg, #feb47b, #ff7e5f); /* เปลี่ยนทิศทางสีไล่ระดับเมื่อ hover */
+transform: scale(1.05); /* ขยายปุ่มเล็กน้อยเมื่อ hover */
+box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3); /* เพิ่มเงาให้เด่นชัดขึ้นเมื่อ hover */
 }
 
 /* ปุ่มกลับไปหน้าหลัก */
 .form-buttons-left {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  margin: 20px;
-  padding: 10px 20px;
-  font-size: 1.2rem;
-  background-color: transparent;
-  border: none;
-  cursor: pointer;
-
+position: fixed; /* กำหนดตำแหน่งคงที่ของปุ่ม */
+bottom: 0; /* ยึดปุ่มไว้ที่ด้านล่าง */
+left: 0; /* ยึดปุ่มไว้ที่ด้านซ้าย */
+margin: 20px; /* เพิ่มระยะห่างรอบปุ่ม */
+padding: 10px 20px; /* ระยะห่างภายในปุ่ม */
+font-size: 1.2rem; /* ขนาดตัวอักษร */
+background-color: transparent; /* สีพื้นหลังใส */
+border: none; /* ลบขอบของปุ่ม */
+cursor: pointer; /* เปลี่ยนเม้าส์เป็น pointer เมื่อ hover */
 }
 
 .left-button {
-  background: linear-gradient(90deg, #ca530a); /* ปรับสีไล่ระดับสำหรับปุ่มซ้าย */
+background: linear-gradient(90deg, #ca530a); /* สีไล่ระดับของปุ่มซ้าย */
 }
 
 /* ปุ่มส่งคำขอ */
 .form-buttons-right {
-  position: fixed;
-  bottom: 0;
-  right: 0;
-  margin: 20px;
-  padding: 10px 20px;
-  font-size: 1.2rem;
-  background-color: transparent;
-  border: none;
-  cursor: pointer;
-
+position: fixed; /* กำหนดตำแหน่งคงที่ของปุ่ม */
+bottom: 0; /* ยึดปุ่มไว้ที่ด้านล่าง */
+right: 0; /* ยึดปุ่มไว้ที่ด้านขวา */
+margin: 20px; /* เพิ่มระยะห่างรอบปุ่ม */
+padding: 10px 20px; /* ระยะห่างภายในปุ่ม */
+font-size: 1.2rem; /* ขนาดตัวอักษร */
+background-color: transparent; /* สีพื้นหลังใส */
+border: none; /* ลบขอบของปุ่ม */
+cursor: pointer; /* เปลี่ยนเม้าส์เป็น pointer เมื่อ hover */
 }
 
 .right-button {
-  background: linear-gradient(90deg, #ff6a00, #ee0979); /* ปรับสีไล่ระดับสำหรับปุ่มขวา */
+background: linear-gradient(90deg, #ff6a00, #ee0979); /* สีไล่ระดับของปุ่มขวา */
 }
 
 /* Hover effect เพิ่มเติม */
 .left-button:hover {
-  background: linear-gradient(90deg, #0072ff, #00c6ff); /* เปลี่ยนทิศทางสีไล่ระดับ */
+background: linear-gradient(90deg, #0072ff, #00c6ff); /* สีไล่ระดับเมื่อ hover สำหรับปุ่มซ้าย */
 }
 
 .right-button:hover {
-  background: linear-gradient(90deg, #ee0979, #ff6a00); /* เปลี่ยนทิศทางสีไล่ระดับ */
+background: linear-gradient(90deg, #ee0979, #ff6a00); /* สีไล่ระดับเมื่อ hover สำหรับปุ่มขวา */
 }
-
-  

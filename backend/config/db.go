@@ -75,28 +75,33 @@ func SetupDatabase() {
 	for i, concert := range concerts {
 		db.FirstOrCreate(&concerts[i], &entity.Concert{Name: concert.Name})
 	}
-	// กำหนดสไลซ์ของคำขอคืนเงิน
+	// สร้างสไลซ์ของคำขอคืนเงิน
 	refundRequests := []entity.Refundrequest{
-		{
-			Refund_amount: "500.00",
+		{// 
+			Refund_amount: "500.00", // จำนวนเงินที่คืน
 			Refund_Date:   time.Now(), // วันที่คืนเงิน
-			
-			// Refundapproval: 1,
+			// Refundapproval: 1, // ใช้เพื่อเชื่อมโยงกับการอนุมัติ
 		},
 	}
-	// วนลูปผ่านคำขอคืนเงิน
+
+	// บันทึกคำขอคืนเงิน
 	for _, refundRequest := range refundRequests {
 		db.Create(&refundRequest)
 	}
 
+	// สร้างสไลซ์ของการอนุมัติคืนเงิน
 	Refundapproval := []entity.Refundapproval{
 		{
-			Approval_status: "approve",
-			Approval_Date:   time.Now(), // วันที่คืนเงิน
-			
+			Approval_status: "approve", // สถานะการอนุมัติ
+			Approval_Date:   time.Now(), // วันที่อนุมัติ
+		},
+		{
+			Approval_status: "reject", // สถานะการอนุมัติไม่ผ่าน
+			Approval_Date:   time.Now(), // วันที่อนุมัติ
 		},
 	}
-	// วนลูปผ่านคำขอคืนเงิน
+
+	// บันทึกการอนุมัติคืนเงิน
 	for _, Refundapproval := range Refundapproval {
 		db.Create(&Refundapproval)
 	}
