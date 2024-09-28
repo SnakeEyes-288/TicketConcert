@@ -50,7 +50,21 @@ func main() {
 		router.POST("/sendTicketEmail", controller.SendEmail)
 		//router.GET("/Condition",controller.ListCondition)
 		router.POST("/CreateCondition",controller.CreateConditionRefun)
-		router.POST("/refund-request",controller.RefundRequest)
+		//Refundrequest
+		router.GET("/refundrequest", controller.GetAllRefundrequest)
+		router.GET("/refundrequest/:id", controller.GetRefundrequestbyId)
+		router.POST("/refundrequest", controller.CreateRefundrequest)
+		router.DELETE("/refundrequest/:id", controller.DeleteRefundrequest)
+		router.PUT("/refundrequest/:id",controller.UpdateRefundrequestByUserID)
+		router.PATCH("/refundrequest/:id",controller.UpdateRefundrequest)
+		//Refundapproval
+		router.GET("/refundapproval", controller.GetAllRefundApproval)
+		router.GET("/refundapproval/:id", controller.GetRefundapprovalbyId)
+		router.POST("/refundapproval", controller.CreateRefundApproval)
+		router.DELETE("/refundapproval/:id", controller.DeleteRefundapproval)
+		router.PUT("/refundapproval/:id",controller.UpdateRefundapprovalByUserID)
+		router.PATCH("/refundapproval/:id",controller.UpdateRefundApproval)
+		
 	}
 
 	r.GET("/", func(c *gin.Context) {

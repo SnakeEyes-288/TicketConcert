@@ -4,6 +4,8 @@ import { PaymentInterface } from "../../interfaces/IPayment";
 import { SmsInterface } from "../../interfaces/ISms";
 import { TicketInterface } from "../../interfaces/ITicket";
 import { ConditionInterface } from "../../interfaces/ICondition";
+import { RefundapprovalInterface } from "../../interfaces/IRefundapproval";
+import { RefundrequestInterface } from "../../interfaces/IRefundrequest" ;
 
 const apiUrl = "http://localhost:8000";
 
@@ -443,29 +445,41 @@ async function CreateConditionRefun( conditionRefunData : ConditionInterface) {
   return res;
 }
 
-async function submitRefundRequest(values: any, ticket: any){
-  try {
-    // eslint-disable-next-line no-template-curly-in-string
-    const response = await fetch(`${apiUrl}/refund-request`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ ...values, ticket }), // ส่งข้อมูลตั๋วไปด้วย
-    });
 
-    // ตรวจสอบสถานะ response
-    if (response.ok) {
-      return { success: true };
-    } else {
-      throw new Error("Request failed");
-    }
-  } catch (error) {
-    // ตรวจสอบว่า error เป็น instance ของ Error หรือไม่
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return { success: false, message: errorMessage };
+async function submitRefundRequest(refundData: RefundrequestInterface): Promise<RefundapprovalInterface> {
+  const token = localStorage.getItem("token");
+  
+  if (!token) {
+    return { success: false, message: "User is not authenticated" };
   }
 
+  const requestOptions = {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(refundData),
+  };
+
+  try {
+    const res = await fetch(`${apiUrl}/refundrequest`, requestOptions);
+
+    if (res.ok) { 
+        const data = await res.json();
+        // ต้องคืนค่าตามโครงสร้าง RefundapprovalInterface ที่คุณกำหนด
+        return { success: true, message: "คำขอคืนเงินสำเร็จ", ...data }; 
+    } else {
+        const errorData = await res.json();
+        return { success: false, message: errorData.message || "เกิดข้อผิดพลาด" };
+    }
+} catch (error: unknown) {
+    console.error("Error during refund request:", error);
+    if (error instanceof Error) {
+        return { success: false, message: error.message };
+    }
+    return { success: false, message: "เกิดข้อผิดพลาดที่ไม่รู้จัก" };
+}
 }
 
 async function GetTicketByID(ticketID: number) {

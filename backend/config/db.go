@@ -75,7 +75,31 @@ func SetupDatabase() {
 	for i, concert := range concerts {
 		db.FirstOrCreate(&concerts[i], &entity.Concert{Name: concert.Name})
 	}
+	// กำหนดสไลซ์ของคำขอคืนเงิน
+	refundRequests := []entity.Refundrequest{
+		{
+			Refund_amount: "500.00",
+			Refund_Date:   time.Now(), // วันที่คืนเงิน
+			
+			// Refundapproval: 1,
+		},
+	}
+	// วนลูปผ่านคำขอคืนเงิน
+	for _, refundRequest := range refundRequests {
+		db.Create(&refundRequest)
+	}
 
+	Refundapproval := []entity.Refundapproval{
+		{
+			Approval_status: "approve",
+			Approval_Date:   time.Now(), // วันที่คืนเงิน
+			
+		},
+	}
+	// วนลูปผ่านคำขอคืนเงิน
+	for _, Refundapproval := range Refundapproval {
+		db.Create(&Refundapproval)
+	}
 
 	for _, concert := range concerts {
 		for _, seatType := range seatTypes {

@@ -8,13 +8,11 @@ type Refundrequest struct {
     gorm.Model
     Refund_amount    string
     Refund_Date      time.Time
-	Refund_reason	 string
-	Username   		 string
-    Email      		 string
-    PhoneNumber 	 string
-    
-    Refundapproval     []Refundapproval
+    Refund_reason    string
 
-	PaymentID *uint
-	Payment Payment
+    PaymentID    *uint      // Foreign Key ชี้ไปที่การชำระเงิน
+    Payment  Payment
+    
+    RefundapprovalID   uint
+    Refundapproval     Refundapproval `gorm:"foreignKey:RefundapprovalID"`
 }

@@ -9,6 +9,7 @@ interface UserContextInterface {
   username?: string; 
   email?: string;    
   imageUrl?: string; 
+  phone?: string;
 }
 
 const UserContext = createContext<UserContextInterface | undefined>(undefined);
@@ -19,6 +20,7 @@ const UserContextProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [username, setUsername] = useState<string | undefined>(undefined);
   const [email, setEmail] = useState<string | undefined>(undefined);
   const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
+  const [phone, setIPhone] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     const fetchMemberData = async () => {
@@ -29,6 +31,7 @@ const UserContextProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setUsername(memberData.Username); // ใช้ Username จาก API
             setEmail(memberData.Email); // ใช้ Email จาก API
             setImageUrl(memberData.imageUrl); // หากมีภาพโปรไฟล์ สามารถใช้ได้ที่นี่
+            setIPhone(memberData.phone);
           }
         } catch (error) {
           console.error("Error fetching member data:", error);
@@ -40,7 +43,7 @@ const UserContextProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [memberID]); // เพิ่ม memberID เป็น dependency เพื่อให้ฟังก์ชันทำงานใหม่เมื่อ memberID เปลี่ยน
 
   return (
-    <UserContext.Provider value={{ token, memberID, setToken, setMemberID, username, email, imageUrl }}>
+    <UserContext.Provider value={{ token, memberID, setToken, setMemberID, username, email, imageUrl, phone }}>
       {children}
     </UserContext.Provider>
   );

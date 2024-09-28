@@ -32,11 +32,18 @@ const SignIn: React.FC = () => {
   
       if (res.ok) {
         const data = await res.json();
-        
+  
         // บันทึก Token และ MemberID ลงใน UserContext และ localStorage
         setToken(data.token);
         localStorage.setItem("token", data.token); // เก็บ Token ใน localStorage
         setMemberID(data.id);
+  
+        // บันทึกข้อมูลผู้ใช้ลงใน localStorage
+        localStorage.setItem("user", JSON.stringify({
+          username: data.username,
+          email: data.email,
+          phone: data.phoneNumber, // ใช้ให้ตรงตามข้อมูลที่กลับมา
+        }));
   
         // เปลี่ยนเส้นทางไปยังหน้าอื่น
         navigate("/concerts", { state: { email } });
@@ -51,6 +58,7 @@ const SignIn: React.FC = () => {
       setLoading(false);
     }
   };
+  
   
 
   return (
