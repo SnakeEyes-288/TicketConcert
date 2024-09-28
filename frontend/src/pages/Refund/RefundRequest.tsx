@@ -25,17 +25,18 @@ const RefundRequest: React.FC = () => {
   // Fetch the logged-in user info from localStorage
   useEffect(() => {
     const userData = localStorage.getItem("user");
-    console.log(userData); // ตรวจสอบข้อมูล userData
-    console.log("Logged In User:", { username, email, phone }); // ตรวจสอบค่าที่ดึงมา
+    console.log("Raw userData from localStorage:", userData); // ตรวจสอบข้อมูล userData
     if (userData) {
       const user: MemberInterface = JSON.parse(userData);
       setLoggedInUser(user);
+      console.log("Logged In User after setting state:", user);
     } else {
       messageApi.error("ไม่สามารถดึงข้อมูลผู้ใช้ได้ กรุณาเข้าสู่ระบบใหม่");
       navigate("/login");
     }
-  }, [email, messageApi, navigate, phone, username]);
-  
+  }, [messageApi, navigate]); // เอา email, phone, username ออกจาก dependency array เพื่อให้ useEffect นี้ทำงานเมื่อ component mount เท่านั้น
+
+  // Handle form submission
   const handleSubmit = async (values: any) => {
     if (!loggedInUser) {
         messageApi.error("ไม่สามารถดึงข้อมูลผู้ใช้ได้");
