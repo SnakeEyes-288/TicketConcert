@@ -3,8 +3,6 @@ export interface RefundrequestInterface {
     Refund_amount?: number;   
     Refund_Date?: string;     
     Refund_reason?: string;   
-    Username?: string;
-    Email?: string;
-    PhoneNumber?:string;
+    PaymentID?: number;
 
 }

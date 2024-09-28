@@ -1,71 +1,98 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Form, Input, Button, message, Modal } from "antd";
 import { useNavigate, useLocation } from "react-router-dom";
 import "./RefundRequest.css";
 import Profile from "./Profile/Profile";
-import { submitRefundRequest } from "../../services/https"; // ดึงฟังก์ชันจากไฟล์ services
+import { submitRefundRequest } from "../../services/https";
+import { RefundapprovalInterface } from "../../interfaces/IRefundapproval";
+import { RefundrequestInterface } from "../../interfaces/IRefundrequest";
+import { MemberInterface } from "../../interfaces/IMember";
 
 const RefundRequest: React.FC = () => {
   const [form] = Form.useForm();
   const navigate = useNavigate();
   const location = useLocation();
   const [messageApi, contextHolder] = message.useMessage();
+  
+  // State for storing the logged-in user's information
+  const [loggedInUser, setLoggedInUser] = useState<MemberInterface | null>(null);
 
   // รับข้อมูลตั๋วจาก state
   const ticket = location.state?.ticket;
 
-  // Example of logged-in user data for validation
-  const loggedInUser = {
-    username: "Sa1",
-    phone: "0990399752",
-    email: "B6512194@g.sut.ac.th",
-  };
-
-  // Handler for form submission
-  const handleSubmit = async (values: any) => {
-    console.log("Form Values:", values); // ตรวจสอบค่าที่ได้จากฟอร์ม
-    console.log("Logged In User:", loggedInUser); // ตรวจสอบค่าของผู้ใช้ที่ล็อกอิน
+  // Fetch the logged-in user info from localStorage
+  useEffect(() => {
+    const userData = localStorage.getItem("user");
+    console.log(userData); // ตรวจสอบข้อมูล userData
+    if (userData) {
+      const user: MemberInterface = JSON.parse(userData);
+      setLoggedInUser(user);
+    } else {
+      messageApi.error("ไม่สามารถดึงข้อมูลผู้ใช้ได้ กรุณาเข้าสู่ระบบใหม่");
+      navigate("/login");
+    }
+  }, [messageApi, navigate]);
   
+  const handleSubmit = async (values: any) => {
+    if (!loggedInUser) {
+        messageApi.error("ไม่สามารถดึงข้อมูลผู้ใช้ได้");
+        return;
+    }
+
+    console.log("Logged In User:", loggedInUser);
+    console.log("Values Submitted:", values);
+  
+    // ตรวจสอบว่าข้อมูลที่กรอกตรงกับข้อมูลผู้ใช้ที่ล็อกอินหรือไม่
     if (
-      values.username !== loggedInUser.username ||
-      values.phone !== loggedInUser.phone ||
-      values.email !== loggedInUser.email
+        values.username !== loggedInUser.Username ||
+        values.phone !== loggedInUser.phone ||
+        values.email !== loggedInUser.Email
     ) {
-      messageApi.error("ข้อมูลไม่ถูกต้อง");
-      return;
+        messageApi.error("ข้อมูลไม่ถูกต้อง");
+        return;
     }
   
-    // เรียกฟังก์ชัน submitRefundRequest จาก services
-    const result = await submitRefundRequest(values, ticket);
+    // สร้างข้อมูลสำหรับส่งคำขอ
+    const refundData: RefundrequestInterface = {
+        Refund_reason: values.reason,
+        PaymentID: ticket?.PaymentID,
+    };
+  
+    // ส่งคำขอคืนเงิน
+    const result: RefundapprovalInterface = await submitRefundRequest(refundData);
   
     if (result.success) {
-      Modal.success({
-        title: "สำเร็จ",
-        content: "ส่งคำขอสำเร็จ",
-      });
-      navigate("/concerts"); // กลับไปหน้าหลักหลังส่งคำขอสำเร็จ
+        Modal.success({
+            title: "สำเร็จ",
+            content: "ส่งคำขอสำเร็จ",
+        });
+        navigate("/concerts");
     } else {
-      messageApi.error("เกิดข้อผิดพลาดในการส่งคำขอ: " + result.message);
+        messageApi.error("เกิดข้อผิดพลาดในการส่งคำขอ: " + result.message);
     }
   };
-  
 
+  // กลับไปหน้าหลัก
   const handleBack = () => {
-    navigate("/concerts"); // Navigate to the homepage
+    navigate("/concerts");
   };
 
   return (
     <>
       {contextHolder}
       <div className="refund-request-container">
-        <Profile username={loggedInUser.username} email={loggedInUser.email} imageUrl={""} /> {/* เรียกใช้คอมโพเนนต์ Profile */}
+        <Profile
+          username={loggedInUser?.Username || ""}
+          email={loggedInUser?.Email || ""}
+          imageUrl={""}
+        />
         <Form form={form} onFinish={handleSubmit} className="request-card-form">
           <h1>ขอคืนบัตร</h1>
           <Form.Item
             label={<span style={{ color: "white", fontSize: "20px" }}>ชื่อผู้ใช้งาน</span>}
             name="username"
-            labelCol={{ span: 24 }} // Full width for label
-            wrapperCol={{ span: 24 }} // Full width for input
+            labelCol={{ span: 24 }}
+            wrapperCol={{ span: 24 }}
             rules={[{ required: true, message: "กรุณากรอกชื่อผู้ใช้งาน" }]}
           >
             <Input placeholder="กรอกชื่อผู้ใช้งาน" />
@@ -73,8 +100,8 @@ const RefundRequest: React.FC = () => {
           <Form.Item
             label={<span style={{ color: "white", fontSize: "20px" }}>เบอร์โทร</span>}
             name="phone"
-            labelCol={{ span: 24 }} // Full width for label
-            wrapperCol={{ span: 24 }} // Full width for input
+            labelCol={{ span: 24 }}
+            wrapperCol={{ span: 24 }}
             rules={[{ required: true, message: "กรุณากรอกเบอร์โทร" }]}
           >
             <Input placeholder="กรอกเบอร์โทร" />
@@ -82,8 +109,8 @@ const RefundRequest: React.FC = () => {
           <Form.Item
             label={<span style={{ color: "white", fontSize: "20px" }}>อีเมล</span>}
             name="email"
-            labelCol={{ span: 24 }} // Full width for label
-            wrapperCol={{ span: 24 }} // Full width for input
+            labelCol={{ span: 24 }}
+            wrapperCol={{ span: 24 }}
             rules={[{ required: true, message: "กรุณากรอกอีเมล" }]}
           >
             <Input placeholder="กรอกอีเมล" />
@@ -91,8 +118,8 @@ const RefundRequest: React.FC = () => {
           <Form.Item
             label={<span style={{ color: "white", fontSize: "20px" }}>เหตุผล</span>}
             name="reason"
-            labelCol={{ span: 24 }} // Full width for label
-            wrapperCol={{ span: 24 }} // Full width for input
+            labelCol={{ span: 24 }}
+            wrapperCol={{ span: 24 }}
             rules={[{ required: true, message: "กรุณากรอกเหตุผล" }]}
           >
             <Input.TextArea placeholder="เหตุผล" rows={4} />
