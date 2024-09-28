@@ -35,56 +35,63 @@ import (
 //     c.JSON(http.StatusOK, gin.H{"message": "Refund status updated successfully"})
 // }
 
+// ฟังก์ชัน GetAllRefundApproval ใช้ในการดึงข้อมูลการอนุมัติคืนเงินทั้งหมด
 func GetAllRefundApproval(c *gin.Context) {
-	var RefundApproval []entity.Refundapproval
-	db := config.DB()
+	var RefundApproval []entity.Refundapproval // ประกาศตัวแปรเก็บข้อมูลการอนุมัติคืนเงิน
+	db := config.DB() // เรียกการเชื่อมต่อฐานข้อมูลจาก config
 
-	results := db.Find(&RefundApproval)
+	results := db.Find(&RefundApproval) // ดึงข้อมูลการอนุมัติคืนเงินทั้งหมดจากฐานข้อมูล
 
 	if results.Error != nil {
+		// ถ้ามีข้อผิดพลาด ให้ส่งสถานะ 404
 		c.JSON(http.StatusNotFound, gin.H{"error": results.Error.Error()})
 		return
 	}
 
+	// ส่งคืนข้อมูลการอนุมัติคืนเงินทั้งหมดด้วยสถานะ 200
 	c.JSON(http.StatusOK, RefundApproval)
 }
 
+// ฟังก์ชัน GetRefundapprovalbyId ใช้ในการดึงข้อมูลการอนุมัติคืนเงินตาม ID ที่ระบุ
 func GetRefundapprovalbyId(c *gin.Context) {
-    db := config.DB()
-    // รับ ID จากพารามิเตอร์ของ URL
-    id := c.Param("id")
+    db := config.DB() // เรียกการเชื่อมต่อฐานข้อมูลจาก config
+    id := c.Param("id") // รับ ID จากพารามิเตอร์ของ URL
 
-    var Refundapproval entity.Refundapproval
+    var Refundapproval entity.Refundapproval // ประกาศตัวแปรเก็บข้อมูลการอนุมัติคืนเงิน
 
-    // ค้นหาคำขอคืนเงินในฐานข้อมูลตาม ID
+    // ค้นหาการอนุมัติคืนเงินในฐานข้อมูลตาม ID
     if err := db.First(&Refundapproval, id).Error; err != nil {
         // ถ้าไม่พบข้อมูล ให้ส่งสถานะ 404
         c.JSON(http.StatusNotFound, gin.H{"message": "Refund request not found"})
         return
     }
 
-    // ส่งคืนข้อมูลคำขอคืนเงิน
+    // ส่งคืนข้อมูลการอนุมัติคืนเงินด้วยสถานะ 200
     c.JSON(http.StatusOK, Refundapproval)
 }
 
+// ฟังก์ชัน DeleteRefundapproval ใช้ในการลบข้อมูลการอนุมัติคืนเงินตาม ID ที่ระบุ
 func DeleteRefundapproval(c *gin.Context) {
+	id := c.Param("id") // รับ ID จากพารามิเตอร์ของ URL
+	db := config.DB()   // เรียกการเชื่อมต่อฐานข้อมูลจาก config
 
-	id := c.Param("id")
-	db := config.DB()
+	// ลบข้อมูลการอนุมัติคืนเงินที่ตรงกับ ID
 	if tx := db.Exec("DELETE FROM Refundapproval WHERE id = ?", id); tx.RowsAffected == 0 {
+		// ถ้าจำนวนแถวที่ถูกลบคือ 0 ให้ตอบกลับด้วยสถานะ 400
 		c.JSON(http.StatusBadRequest, gin.H{"error": "id not found"})
 		return
 	}
+	// ส่งข้อความว่าลบสำเร็จด้วยสถานะ 200
 	c.JSON(http.StatusOK, gin.H{"message": "Deleted successful"})
-
 }
 
-//post
+// ฟังก์ชัน CreateRefundApproval ใช้ในการสร้างการอนุมัติคืนเงินใหม่
 func CreateRefundApproval(c *gin.Context) {
-    var refundApproval entity.Refundapproval
+    var refundApproval entity.Refundapproval // ประกาศตัวแปรเก็บข้อมูลการอนุมัติคืนเงินใหม่
 
     // รับข้อมูล JSON ที่ส่งมา
     if err := c.ShouldBindJSON(&refundApproval); err != nil {
+        // ถ้ามีข้อผิดพลาดในการแปลงข้อมูล ส่งสถานะ 400
         c.JSON(http.StatusBadRequest, gin.H{"error": "Bad request, unable to map payload"})
         return
     }
@@ -94,71 +101,75 @@ func CreateRefundApproval(c *gin.Context) {
         refundApproval.Approval_Date = time.Now()
     }
 
-    // บันทึก RefundApproval ใหม่ในฐานข้อมูล
-    db := config.DB()
-    result := db.Create(&refundApproval)
+    db := config.DB() // เรียกการเชื่อมต่อฐานข้อมูลจาก config
+    result := db.Create(&refundApproval) // บันทึกการอนุมัติคืนเงินใหม่ในฐานข้อมูล
     if result.Error != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()}) // แสดงข้อผิดพลาดจากฐานข้อมูล
+        // ถ้ามีข้อผิดพลาดในการบันทึก ส่งสถานะ 500
+        c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()}) 
         return
     }
 
-    // ส่งข้อมูลที่สร้างใหม่กลับไป
+    // ส่งข้อมูลที่สร้างใหม่กลับไปด้วยสถานะ 201
     c.JSON(http.StatusCreated, gin.H{"message": "Created successfully", "data": refundApproval})
 }
 
-//put
+// ฟังก์ชัน UpdateRefundapprovalByUserID ใช้ในการอัปเดตข้อมูลการอนุมัติคืนเงินตาม User ID
 func UpdateRefundapprovalByUserID(c *gin.Context) {
-    var Refundapproval entity.Refundapproval
+    var Refundapproval entity.Refundapproval // ประกาศตัวแปรเก็บข้อมูลการอนุมัติคืนเงิน
     userID := c.Param("id") // รับค่า UserID จาก URL
 
-    db := config.DB()
+    db := config.DB() // เรียกการเชื่อมต่อฐานข้อมูลจาก config
 
-    // ค้นหาข้อมูล Payment ที่ตรงกับ UserID
+    // ค้นหาข้อมูลการอนุมัติคืนเงินที่ตรงกับ UserID
     result := db.Where("id = ?", userID).First(&Refundapproval)
     if result.Error != nil {
+        // ถ้าไม่พบข้อมูล ให้ส่งสถานะ 404
         c.JSON(http.StatusNotFound, gin.H{"error": "Refundapproval not found for this user"})
         return
     }
 
     // ตรวจสอบว่าข้อมูลที่ส่งมามีปัญหาหรือไม่
     if err := c.ShouldBindJSON(&Refundapproval); err != nil {
+        // ถ้ามีข้อผิดพลาดในการแปลงข้อมูล ส่งสถานะ 400
         c.JSON(http.StatusBadRequest, gin.H{"error": "Bad request, unable to map payload"})
         return
     }
 
-    // อัปเดตข้อมูล Payment
+    // อัปเดตข้อมูลการอนุมัติคืนเงิน
     result = db.Save(&Refundapproval)
     if result.Error != nil {
+        // ถ้าอัปเดตไม่สำเร็จ ส่งสถานะ 400
         c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to update Refundapproval"})
         return
     }
 
+    // ส่งข้อความว่าอัปเดตสำเร็จด้วยสถานะ 200
     c.JSON(http.StatusOK, gin.H{"message": "Updated successfully", "data": Refundapproval})
 }
 
-//patch
+// ฟังก์ชัน UpdateRefundApproval ใช้ในการอัปเดตข้อมูลการอนุมัติคืนเงินตาม RefundApprovalID
 func UpdateRefundApproval(c *gin.Context) {
-    var refundApproval entity.Refundapproval
+    var refundApproval entity.Refundapproval // ประกาศตัวแปรเก็บข้อมูลการอนุมัติคืนเงิน
 
-    // รับ ID ของ RefundApproval จากพารามิเตอร์ของ URL
-    refundApprovalID := c.Param("id")
+    refundApprovalID := c.Param("id") // รับ ID ของการอนุมัติคืนเงินจากพารามิเตอร์ของ URL
 
-    // ค้นหา RefundApproval ในฐานข้อมูล
-    db := config.DB()
-    result := db.First(&refundApproval, refundApprovalID)
+    db := config.DB() // เรียกการเชื่อมต่อฐานข้อมูลจาก config
+    result := db.First(&refundApproval, refundApprovalID) // ค้นหาการอนุมัติคืนเงินในฐานข้อมูลตาม ID
     if result.Error != nil {
+        // ถ้าไม่พบข้อมูล ส่งสถานะ 404
         c.JSON(http.StatusNotFound, gin.H{"error": "ID not found"})
         return
     }
 
     // รับข้อมูล JSON ที่ส่งมา
     var input struct {
-        ApprovalStatus string    `json:"approval_status"`
-        ApprovalDate   time.Time `json:"approval_date"`
+        ApprovalStatus string    `json:"approval_status"` // ฟิลด์สำหรับสถานะการอนุมัติ
+        ApprovalDate   time.Time `json:"approval_date"`   // ฟิลด์สำหรับวันที่อนุมัติ
     }
 
     // ตรวจสอบการจับคู่ข้อมูล JSON
     if err := c.ShouldBindJSON(&input); err != nil {
+        // ถ้ามีข้อผิดพลาดในการแปลงข้อมูล ส่งสถานะ 400
         c.JSON(http.StatusBadRequest, gin.H{"error": "Bad request, unable to map payload"})
         return
     }
@@ -170,10 +181,11 @@ func UpdateRefundApproval(c *gin.Context) {
     // บันทึกการเปลี่ยนแปลงในฐานข้อมูล
     result = db.Save(&refundApproval)
     if result.Error != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()}) // แสดงข้อผิดพลาดจากฐานข้อมูล
+        // ถ้ามีข้อผิดพลาดในการบันทึก ส่งสถานะ 500
+        c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()}) 
         return
     }
 
-    // ส่งข้อมูลที่อัปเดตกลับไป
+    // ส่งข้อมูลที่อัปเดตกลับไปด้วยสถานะ 200
     c.JSON(http.StatusOK, gin.H{"message": "Updated successfully", "data": refundApproval})
 }

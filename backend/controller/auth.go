@@ -105,66 +105,48 @@ func SignUp(c *gin.Context) {
 
 func SignIn(c *gin.Context) {
 
-   var payload Login
+    var payload Login
+    var user entity.Member
 
-   var user entity.Member
+    if err := c.ShouldBindJSON(&payload); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
 
+    // ค้นหา user ด้วย Email ที่ผู้ใช้กรอกเข้ามา
+    if err := config.DB().Raw("SELECT * FROM members WHERE email = ?", payload.Email).Scan(&user).Error; err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
 
-   if err := c.ShouldBindJSON(&payload); err != nil {
+    // ตรวจสอบรหัสผ่าน
+    err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(payload.Password))
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "password is incorrect"})
+        return
+    }
 
-       c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+    // สร้าง JWT Token
+    jwtWrapper := services.JwtWrapper{
+        SecretKey:       "SvNQpBN8y3qlVrsGAYYWoJJk56LtzFHx",
+        Issuer:          "AuthService",
+        ExpirationHours: 24,
+    }
 
-       return
+    signedToken, err := jwtWrapper.GenerateToken(user.Email)
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "error signing token"})
+        return
+    }
 
-   }
-
-   // ค้นหา user ด้วย Username ที่ผู้ใช้กรอกเข้ามา
-
-   if err := config.DB().Raw("SELECT * FROM members WHERE email = ?", payload.Email).Scan(&user).Error; err != nil {
-
-       c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-
-       return
-
-   }
-
-
-   // ตรวจสอบรหัสผ่าน
-
-   err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(payload.Password))
-
-   if err != nil {
-
-       c.JSON(http.StatusBadRequest, gin.H{"error": "password is incerrect"})
-
-       return
-
-   }
-
-
-   jwtWrapper := services.JwtWrapper{
-
-       SecretKey:       "SvNQpBN8y3qlVrsGAYYWoJJk56LtzFHx",
-
-       Issuer:          "AuthService",
-
-       ExpirationHours: 24,
-
-   }
-
-
-   signedToken, err := jwtWrapper.GenerateToken(user.Email)
-
-   if err != nil {
-
-       c.JSON(http.StatusBadRequest, gin.H{"error": "error signing token"})
-
-       return
-
-   }
-
-
-   c.JSON(http.StatusOK, gin.H{"token_type": "Bearer", "token": signedToken, "id": user.ID})
-
+    // ส่งข้อมูลกลับไปยัง client
+    c.JSON(http.StatusOK, gin.H{
+        "token_type": "Bearer",
+        "token": signedToken,
+        "id": user.ID,
+        "username": user.Username,
+        "email": user.Email,
+        "phoneNumber": user.PhoneNumber,
+    })
 
 }

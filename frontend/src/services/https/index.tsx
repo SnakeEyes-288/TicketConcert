@@ -447,38 +447,38 @@ async function CreateConditionRefun( conditionRefunData : ConditionInterface) {
 
 
 async function submitRefundRequest(refundData: RefundrequestInterface): Promise<RefundapprovalInterface> {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("token");// ดึง token ของผู้ใช้จาก localStorage
   
   if (!token) {
-    return { success: false, message: "User is not authenticated" };
+    return { success: false, message: "User is not authenticated" };// ตรวจสอบว่ามี token หรือไม่ ถ้าไม่มี ให้คืนค่าพร้อม error message
   }
 
   const requestOptions = {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${token}`,
-      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`,// ใส่ token ลงใน header สำหรับการยืนยันตัวตน
+      "Content-Type": "application/json",// กำหนดประเภทของเนื้อหาที่จะส่งเป็น JSON
     },
-    body: JSON.stringify(refundData),
+    body: JSON.stringify(refundData),// แปลงข้อมูล refundData เป็น JSON และใส่ลงใน body ของ request
   };
 
-  try {
-    const res = await fetch(`${apiUrl}/refundrequest`, requestOptions);
+  try {// ตรวจสอบว่าการตอบกลับของ API มีสถานะเป็น "ok" หรือไม่ (สถานะ 200-299)
+    const res = await fetch(`${apiUrl}/refundrequest`, requestOptions);// ส่ง HTTP request ไปยัง API URL สำหรับการขอคืนเงิน
 
     if (res.ok) { 
         const data = await res.json();
         // ต้องคืนค่าตามโครงสร้าง RefundapprovalInterface ที่คุณกำหนด
-        return { success: true, message: "คำขอคืนเงินสำเร็จ", ...data }; 
+        return { success: true, message: "คำขอคืนเงินสำเร็จ", ...data }; // คืนค่าผลลัพธ์ที่สำเร็จพร้อมกับข้อมูลที่ได้รับจาก API
     } else {
-        const errorData = await res.json();
-        return { success: false, message: errorData.message || "เกิดข้อผิดพลาด" };
+        const errorData = await res.json();// แปลงข้อมูล error ที่ได้รับจาก API
+        return { success: false, message: errorData.message || "เกิดข้อผิดพลาด" };// คืนค่าข้อผิดพลาดพร้อมข้อความจาก API (ถ้ามี)
     }
 } catch (error: unknown) {
-    console.error("Error during refund request:", error);
+    console.error("Error during refund request:", error);// แสดง error ใน console สำหรับการดีบัก
     if (error instanceof Error) {
-        return { success: false, message: error.message };
+        return { success: false, message: error.message };// ถ้า error เป็นประเภท Error ให้คืนค่าข้อความจาก error นั้น
     }
-    return { success: false, message: "เกิดข้อผิดพลาดที่ไม่รู้จัก" };
+    return { success: false, message: "เกิดข้อผิดพลาดที่ไม่รู้จัก" };// ถ้าไม่ใช่ error ปกติ คืนค่าข้อความ error ทั่วไป
 }
 }
 

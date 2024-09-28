@@ -32,6 +32,9 @@ const SignIn: React.FC = () => {
   
       if (res.ok) {
         const data = await res.json();
+        
+        // พิมพ์ข้อมูลที่ได้รับกลับมาจาก API ลงใน console
+        console.log('API Response:', data);
   
         // บันทึก Token และ MemberID ลงใน UserContext และ localStorage
         setToken(data.token);
@@ -49,6 +52,7 @@ const SignIn: React.FC = () => {
         navigate("/concerts", { state: { email } });
       } else {
         const errorData = await res.json();
+        console.error('Login failed:', errorData);
         setError(errorData.error || "Login failed. Please check your email and password.");
       }
     } catch (err) {
@@ -57,6 +61,7 @@ const SignIn: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  
   };
   
   
