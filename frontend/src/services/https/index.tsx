@@ -295,6 +295,7 @@ async function SendTicketEmail(ticketIDs: number[]): Promise<boolean[]> {
           Venue: ticket.Seat.Concert?.Venue,
           Seat: ticket.Seat.SeatNumber,
           Amount: ticket.Price,
+          SeatType: ticket.Seat.SeatType?.Name,
         };
 
         const response = await axios.post(

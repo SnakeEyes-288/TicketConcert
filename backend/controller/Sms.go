@@ -4,11 +4,13 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/SnakeEyes-288/sa-67-example/config"
 	"github.com/SnakeEyes-288/sa-67-example/entity"
 	"github.com/gin-gonic/gin"
 	"gopkg.in/gomail.v2"
+    "github.com/skip2/go-qrcode"
 )
 
 // POST /sms
@@ -86,7 +88,7 @@ func DeleteSms(c *gin.Context) {
     //ofcaklsvdrucvjjk
 //}
 
-func SendEmail(c *gin.Context) {  
+func SendEmail(c *gin.Context) {
     token := c.GetHeader("Authorization")
     if token == "" {
         c.JSON(http.StatusUnauthorized, gin.H{"error": "Token is missing"})
@@ -101,6 +103,7 @@ func SendEmail(c *gin.Context) {
         Venue     string  `json:"Venue"`
         Seat      string  `json:"Seat"`
         Amount    float64 `json:"Amount"`
+        SeatType  string   `json:"SeatType"`
     }
 
     if err := c.ShouldBindJSON(&data); err != nil {
@@ -117,7 +120,7 @@ func SendEmail(c *gin.Context) {
     password := "leewnwxjyapaoiwi" // แทนที่ด้วยรหัสผ่านจริง
 
     smtpHost := "smtp.gmail.com"
-    smtpPort := 587 // เปลี่ยนไปใช้พอร์ต 587 สำหรับการเชื่อมต่อแบบ TLS
+    smtpPort := 587
 
     // สร้าง message โดยใช้ gomail
     m := gomail.NewMessage()
@@ -130,15 +133,29 @@ func SendEmail(c *gin.Context) {
         <h1>Ticket Confirmation</h1>
         <p>หมายเลขคำสั่งซื้อที่: %d</p>
         <p>ที่นั่ง: %s</p>
+        <p>ประเภทที่นั่ง: %s</p>
         <p>สถานที่การแสดง: %s</p>
         <p>ราคาบัตร: %.2f บาท</p>`,
-        data.PaymentID, data.Seat, data.Venue, data.Amount)
+        data.PaymentID, data.Seat, data.SeatType,data.Venue, data.Amount)
 
     m.SetBody("text/html", body)
 
+    // สร้าง QR Code จากข้อมูลของผู้ใช้
+    qrData := fmt.Sprintf("หมายเลขคำสั่งซื้อที่: %d, ที่นั่ง: %s,ประเภทที่นั่ง: %s, สถานที่ทำการแสดง: %s, ราคาบัตร: %.2f", data.PaymentID, data.Seat, data.SeatType,data.Venue, data.Amount)
+    qrFile := fmt.Sprintf("ticket_%d.png", data.PaymentID)
+
+    if err := qrcode.WriteFile(qrData, qrcode.Medium, 256, qrFile); err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate QR Code"})
+        return
+    }
+    defer os.Remove(qrFile) // ลบไฟล์ QR Code หลังจากส่งอีเมลสำเร็จ
+
+    // แนบไฟล์ QR Code ลงในอีเมล
+    m.Attach(qrFile)
+
     // สร้าง dialer สำหรับส่งอีเมล
     d := gomail.NewDialer(smtpHost, smtpPort, from, password)
-    d.TLSConfig = &tls.Config{InsecureSkipVerify: true} // การตั้งค่า TLS
+    d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
 
     // ส่งอีเมล
     if err := d.DialAndSend(m); err != nil {
@@ -150,6 +167,7 @@ func SendEmail(c *gin.Context) {
 
     c.JSON(http.StatusOK, gin.H{"status": "Email sent successfully"})
 }
+
 
 
 

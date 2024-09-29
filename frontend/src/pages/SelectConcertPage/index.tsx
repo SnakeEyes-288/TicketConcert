@@ -33,7 +33,7 @@ const ConcertSelection: React.FC = () => {
   }, []);
 
   const handleSelectConcert = (concert: ConcertInterface) => {
-    navigate('/select-seats', { state: { selectedConcert: concert, memberID } });
+    navigate('/select-seats', { state: { selectedConcert: concert } });
   };
 
   const handleViewPaymentHistory = () => {
